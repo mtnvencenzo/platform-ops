@@ -27,6 +27,8 @@ spec:
               name: external
             - containerPort: 19092
               name: internal
+            - containerPort: 9094
+              name: controller
           envFrom:
             - configMapRef:
                 name: kafka-platform-config
@@ -71,3 +73,6 @@ spec:
     - name: internal
       port: 19092
       targetPort: 19092
+    - name: controller
+      port: 9094
+      targetPort: 9094
