@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/mtnvencenzo/platform-ops.git'
+    targetRevision: main
+    path: stacks/kafka-stack/k8s/overlays/kraft
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kafka-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
