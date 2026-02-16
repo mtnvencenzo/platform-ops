@@ -41,9 +41,15 @@ otel-collector.elastic-platform.svc.cluster.local:4318   # OTLP HTTP
 
 ## Access
 
+
 ### Web UIs (via Ingress)
 
 - **Kibana**: http://kibana.127.0.0.1.sslip.io:8080
+
+> **Note:**
+> When deploying with Argo CD or `kubectl`, Kibana is exposed via a Kubernetes Ingress at the above host. For k3d, ensure your cluster is created with the appropriate port mapping, e.g. `k3d cluster create --port "8080:80@loadbalancer"`, so that traffic to port 8080 on your host is forwarded to the cluster's ingress controller. Adjust the port as needed if you use a different mapping.
+
+> If you change the Ingress host or port, update the URL accordingly.
 
 ### OTel Collector (via LoadBalancer)
 
