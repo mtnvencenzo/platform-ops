@@ -1,20 +1,19 @@
 # k8s setup
+Install and create the cluster using docker and k3d
 
 <br />
 
-## Install and create the cluster using docker and k3d
-
-### Step 1: Install Docker CE on Ubuntu 
+## Install Docker CE on Ubuntu 
 If not already installed, follow these steps to install Docker Engine: 
 
-1. Update and install dependencies
+### Step 1: Update and install dependencies
 
 ``` bash
 sudo apt-get update
 sudo apt-get install ca-certificates curl gnupg lsb-release
 ```
 
-2. Add Docker Official GPG Key & Repository
+### Step 2: Add Docker Official GPG Key & Repository
 
 ``` bash
 sudo mkdir -p /etc/apt/keyrings
@@ -22,34 +21,37 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 ```
 
-2. Install Docker Engine
+### Step 3: Install Docker Engine
 
 ``` bash
 sudo apt-get update
 sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 ```
 
-3. Verify Installation
+### Step 4: Verify Installation
 
 ``` bash
 sudo docker run hello-world
 ```
 
-### Step 2: Configure Docker without Sudo (Optional but Recommended) 
+### Step 5: Configure Docker without Sudo (Optional but Recommended) 
 
 ``` bash
 sudo usermod -aG docker $USER
 # Log out and log back in for changes to take effect
 ```
 
-### Step 3: Install K3D 
+<br />
+
+## Install K3D 
 Use the official installation script to install the latest version of k3d: 
 
 ``` shell
 curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 ```
 
-### Step 4: Create a Kubernetes Cluster 
+
+### Step 1: Create a Kubernetes Cluster 
 Create a new cluster using k3d, which spins up K3s inside Docker: 
 
 ``` shell
@@ -62,7 +64,7 @@ k3d cluster create prd-local-apps-001 \
   --gpus all
 ```
 
-### Step 5: Verify the Cluster 
+### Step 2: Verify the Cluster 
 Use kubectl (installed automatically with k3d or installed separately) to verify: 
 
 ```
@@ -70,8 +72,7 @@ Use kubectl (installed automatically with k3d or installed separately) to verify
 kubectl get nodes
 ```
 
-
-### Common Commands:
+#### Common Commands:
 ```  shell
 # Stop cluster:
 k3d cluster stop mycluster
@@ -82,6 +83,7 @@ k3d cluster delete mycluster
 # List clusters:
 k3d cluster list
 ```
+
 
 <br/> 
 
@@ -122,6 +124,7 @@ sudo apt install -y kubectl
 
 ## Install Helm
 
+
 ### Step 1: Install prerequisites
 
 ``` bash
@@ -141,13 +144,66 @@ _Note: The Helm apt repository recently moved to Buildkite; these instructions r
 echo "deb [signed-by=/usr/share/keyrings/helm.gpg] https://packages.buildkite.com/helm-linux/helm-debian/any/ any main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list > /dev/null
 ```
 
-### Install helm and verify
+### Step 4: Install helm and verify
 
 ``` shell
 sudo apt-get update
 sudo apt-get install helm
 helm version
 ```
+
+<br />
+
+## Enable NVIDIA GPU Support in k3d
+
+### Step 1. Install NVIDIA Drivers on the Host
+
+Make sure your host system has the latest NVIDIA drivers installed.  
+You can check with:
+
+```bash
+nvidia-smi
+```
+
+If not installed, follow the official NVIDIA instructions for your OS.
+
+### Step 2. Install NVIDIA Container Toolkit
+
+This allows Docker to use the GPU.
+
+```bash
+# Add the package repositories
+distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+sudo apt-get update
+sudo apt-get install -y nvidia-docker2
+sudo systemctl restart docker
+```
+
+### Step 3. Install the NVIDIA Device Plugin in Kubernetes
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml
+```
+
+### Step 4. Create the NVIDIA RuntimeClass
+
+```yaml
+apiVersion: node.k8s.io/v1
+kind: RuntimeClass
+metadata:
+  name: nvidia
+handler: nvidia
+```
+
+Apply it:
+
+```bash
+kubectl apply -f k8s-setup/nvidia-runtime-class.yml
+```
+
 
 <br />
 
@@ -162,6 +218,7 @@ helm repo update
 ```
 
 ### Step 2: Install cert-manager in the cert-manager namespace
+
 ``` shell
 helm install cert-manager jetstack/cert-manager \
   --namespace cert-manager \
@@ -174,20 +231,22 @@ kubectl get crds | grep cattle
 kubectl delete crd $(kubectl get crds | grep cattle | awk '{print $1}')
 kubectl get crds | grep rancher
 kubectl delete crd $(kubectl get crds | grep rancher | awk '{print $1}')
+```
+_Note: Check the cert-manager documentation for the latest version and CRD installation instructions._
 
-# Setup the cluster issuer
+### Step 3: Setup the cluster issuer
+
+``` shell
 kubectl apply -f k8s-setup/cluster-cert-issuer.yml
 ```
 
 
-
-_Note: Check the cert-manager documentation for the latest version and CRD installation instructions._
-
-### Step 4: Install Rancher using Helm 
+### Step 4: Add the rancher helm repo
 https://rancher.com/docs/
 
 ``` shell
 helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
+helm repo update
 ```
 
 ### Step 5: Create a namespace for the Rancher server:
@@ -206,7 +265,7 @@ kubectl create namespace cattle-system
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
   --set hostname=localhost \
-  --set ingress.tls.source=certmanager \
+  --set ingress.tls.source=none \
   --set ingress.enabled=true \
   --set replicas=1 \
   --set global.cattle.ingress.class=traefik
@@ -258,24 +317,7 @@ helm install argocd argo/argo-cd \
   --create-namespace
 ```
 
-### Step 3: Make it accessible locally via port forwarding
-By default, the Argo CD API server is not exposed externally. Use port-forwarding to access it locally: 
-
-``` shell
-kubectl port-forward svc/argocd-server -n argocd 9090:443
-```
-
-### Step 4: Retreive the auto-generated admin password
-
-``` shell
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
-```
-
-### Step 5: Login to Argo CD
-URL: https://localhost:9090  
-Username: admin
-
-### Step 6: Optionally create a Rancher Ingress (recommended)
+### Step 3: Create a Rancher Ingress
 Since you have Rancher and likely a k3d load balancer running, you can create an Ingress in the Rancher UI to avoid port-forwarding
 
 When you create the Ingress in the Rancher UI, use the values confirmed from the command above: 
@@ -290,65 +332,22 @@ __Port:__ 80 (Choosing 80 avoids SSL mismatch issues during the initial setup)
 _Note: Before looking for the Target Service, ensure the Namespace dropdown at the top of the "Create Ingress" screen is set specifically to argocd. If it is set to "All Namespaces" or "Default," the argocd-server won't appear in the list.  Also, argocd should be added to the default project in Rancher_
 
 
-#### Allow insecure connections to Argo CD
+### Step 4: Allow insecure connections to Argo CD
 ``` shell
 kubectl patch cm argocd-cmd-params-cm -n argocd -p '{"data": {"server.insecure": "true"}}'
 kubectl rollout restart deployment argocd-server -n argocd
 ```
 
-### Browse to Argo CD
-http://argocd.127.0.0.1.sslip.io
+### Step 5: Retreive the auto-generated admin password
 
-_Note: if using an non standard (80) port number like 8080 then that port would need to be used on the ingress urls when access them_
-
-<br />
-
-## Enable NVIDIA GPU Support in k3d
-
-### 1. Install NVIDIA Drivers on the Host
-
-Make sure your host system has the latest NVIDIA drivers installed.  
-You can check with:
-
-```bash
-nvidia-smi
+``` shell
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
 
-If not installed, follow the official NVIDIA instructions for your OS.
+### Step 6: Browse to Argo CD and Login
 
-### 2. Install NVIDIA Container Toolkit
+http://argocd.127.0.0.1.sslip.io:8080
+Username: admin
 
-This allows Docker to use the GPU.
+_Note: if using an non standard (80) port number like 8080 for the cluster then that port would need to be used on the ingress urls when access them_
 
-```bash
-# Add the package repositories
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
-
-sudo apt-get update
-sudo apt-get install -y nvidia-docker2
-sudo systemctl restart docker
-```
-
-### 3. Install the NVIDIA Device Plugin in Kubernetes
-
-```bash
-kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml
-```
-
-### 5. Create the NVIDIA RuntimeClass
-
-```yaml
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: nvidia
-handler: nvidia
-```
-
-Apply it:
-
-```bash
-kubectl apply -f k8s-setup/nvidia-runtime-class.yml
-```
