@@ -59,9 +59,11 @@ spec:
             - name: HF_HOME
               value: "/root/.cache/huggingface"
             - name: CUDA_VISIBLE_DEVICES
-              value: "all"
+              value: ""
+              # value: "all"
             - name: NVIDIA_VISIBLE_DEVICES
-              value: "all"
+              value: ""
+              # value: "all"
             - name: API_KEY
               valueFrom:
                 secretKeyRef:
