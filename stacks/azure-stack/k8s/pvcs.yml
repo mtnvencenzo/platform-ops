@@ -27,33 +27,33 @@ spec:
   resources:
     requests:
       storage: 5Gi
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: sqlserver-data
+#   namespace: azure-platform
+#   labels:
+#     app.kubernetes.io/part-of: azure-platform
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: local-path
+#   resources:
+#     requests:
+#       storage: 10Gi
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: sqlserver-data
-  namespace: azure-platform
-  labels:
-    app.kubernetes.io/part-of: azure-platform
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: appconfig-data
-  namespace: azure-platform
-  labels:
-    app.kubernetes.io/part-of: azure-platform
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 1Gi
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: appconfig-data
+#   namespace: azure-platform
+#   labels:
+#     app.kubernetes.io/part-of: azure-platform
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: local-path
+#   resources:
+#     requests:
+#       storage: 1Gi
