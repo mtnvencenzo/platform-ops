@@ -11,3 +11,4 @@ resources:
   # - eventhubs.yml
   # - servicebus.yml
   # - appconfig.yml
+  - ingress.yml
