@@ -91,7 +91,7 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 10
-      runtimeClassName: nvidia
+      # runtimeClassName: nvidia
       volumes:
         - name: hf-cache
           persistentVolumeClaim:
