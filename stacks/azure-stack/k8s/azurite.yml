@@ -32,6 +32,7 @@ spec:
             - "--location"
             - "/workspace"
             - "--skipApiVersionCheck"
+            - "--disableProductStyleUrl"
           ports:
             - containerPort: 10000
               name: blob

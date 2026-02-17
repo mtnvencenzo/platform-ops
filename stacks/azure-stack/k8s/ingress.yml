@@ -9,7 +9,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-    # Cosmos DB – accessible at http://cosmosdb.127.0.0.1.sslip.io:1234
+    # Cosmos DB – accessible at http://cosmosdb.127.0.0.1.sslip.io:8080
     - host: cosmosdb.127.0.0.1.sslip.io
       http:
         paths:
@@ -20,7 +20,7 @@ spec:
                 name: cosmosdb
                 port:
                   number: 1234
-    # Azurite – accessible at http://azurite.127.0.0.1.sslip.io:10000
+    # Azurite – accessible at http://azurite.127.0.0.1.sslip.io:8080
     - host: azurite.127.0.0.1.sslip.io
       http:
         paths:
