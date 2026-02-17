@@ -59,8 +59,11 @@ k3d cluster delete prd-local-apps-001
 
 k3d cluster create prd-local-apps-001 \
   -p "8080:80@loadbalancer" \
-  -p "8443:443@loadbalancer" \
-  --agents 2 \
+  -p "6443:443@loadbalancer" \
+  --k3s-arg "max-pods=200@server:*;agent:*" \
+  --api-port 6445 \
+  --servers 1 \
+  --agents 1 \
   --gpus all
 ```
 

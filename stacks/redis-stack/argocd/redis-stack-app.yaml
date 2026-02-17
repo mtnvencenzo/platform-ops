@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: redis-stack
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/mtnvencenzo/platform-ops.git'
+    targetRevision: main
+    path: stacks/redis-stack/k8s
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: redis-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: azure-platform-ingress
+  namespace: azure-platform
+  labels:
+    app.kubernetes.io/part-of: azure-platform
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    # Cosmos DB – accessible at http://cosmosdb.127.0.0.1.sslip.io:1234
+    - host: cosmosdb.127.0.0.1.sslip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cosmosdb
+                port:
+                  number: 1234
+    # Azurite – accessible at http://azurite.127.0.0.1.sslip.io:10000
+    - host: azurite.127.0.0.1.sslip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azurite
+                port:
+                  number: 10000
