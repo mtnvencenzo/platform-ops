@@ -10,14 +10,26 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-    # Open WebUI – accessible at http://ai.127.0.0.1.sslip.io:8080
-    - host: ai.127.0.0.1.sslip.io
+    # Qdrant – accessible at http://qdrant.127.0.0.1.sslip.io:8080
+    - host: qdrant.127.0.0.1.sslip.io
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: open-webui
+                name: qdrant
                 port:
-                  number: 3000
+                  number: 6333
+    # # Open WebUI – accessible at http://ai.127.0.0.1.sslip.io:8080
+    # - host: ai.127.0.0.1.sslip.io
+    #   http:
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    #         backend:
+    #           service:
+    #             name: open-webui
+    #             port:
+    #               number: 3000
+

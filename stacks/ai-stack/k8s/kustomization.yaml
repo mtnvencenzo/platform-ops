@@ -5,10 +5,10 @@ resources:
   - namespace.yml
   - configmap.yml
   - pvcs.yml
+  - qdrant.yml
   # - ollama.yml
   # - open-webui.yml
-  - qdrant.yml
-  - tei.yml
-  - tei-reranker.yml
-  - tei-splade.yml
+  # - tei.yml
+  # - tei-reranker.yml
+  # - tei-splade.yml
   - ingress.yml
