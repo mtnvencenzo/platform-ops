@@ -5,3 +5,5 @@
 .DS_Store
 
 .env-local
+
+docker-compose.override.yaml

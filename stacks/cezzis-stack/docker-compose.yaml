@@ -1,0 +1,397 @@
+name: cezzis
+services:
+  cocktails-api:
+    container_name: cocktails-api
+    image: acrveceusgloshared001.azurecr.io/cocktailsapi:latest
+    restart: unless-stopped
+    ports:
+      - "7177:7177"
+      - "7176:7176"
+    environment:
+      - SEED_ON_STARTUP=true
+      - ASPNETCORE_ENVIRONMENT=prd
+      - ASPNETCORE_HTTPS_PORTS=7176
+      - ASPNETCORE_URLS=http://0.0.0.0:7177;https://0.0.0.0:7176
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/docker-local.pfx
+      - LocalhostImages__Enabled=true
+      - LocalhostImages__Path=/data/cocktail/images/
+      - FORCE_HTTPS=false
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    volumes:
+      - "${DOCKER_LOCAL_CERT_PATH:-$HOME/Github/dev-certs/docker-local}/docker-local.pfx:/https/docker-local.pfx:ro"
+      - /home/mtnvencenzo/Github/cezzis-com-cocktails-images/Images/Main:/data/cocktail/images:ro
+    entrypoint: >
+      sh -c "
+        if ls /https/*.crt 1> /dev/null 2>&1; then
+          cp /https/*.crt /usr/local/share/ca-certificates/ &&
+          update-ca-certificates
+        fi &&
+        exec dotnet Cocktails.Api.dll
+      "
+    networks:
+      app-internal-network:
+    depends_on:
+      - dapr-sidecar-cocktails-api
+
+  cocktails-aisearch:
+    container_name: cocktails-aisearch
+    image: acrveceusgloshared001.azurecr.io/cezziscomcocktailsaisearch:latest
+    restart: unless-stopped
+    ports:
+      - "8010:8010"
+    environment:
+      - ENV=prd
+      - COCKTAILS_AISEARCH_ALLOWED_ORIGINS=http://localhost:4001,http://localhost:4002
+      - APIM_HOST_KEY=
+      - OAUTH_DOMAIN=login.cezzis.com
+      - OAUTH_AUDIENCE=https://cezzis-aisearch-api
+      - OAUTH_CLIENT_ID=HZXyiZxjHgkQqeb6UJxmikCGYpSz5iPb
+      - OAUTH_ISSUER=https://login.cezzis.com/
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=cocktails-aisearch
+      - OTEL_SERVICE_NAMESPACE=cezzis
+      - QDRANT_HOST=http://qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_API_KEY=
+      - QDRANT_COLLECTION_NAME=cocktails-prd
+      - QDRANT_VECTOR_SIZE=768
+      - QDRANT_USE_HTTPS=false
+      - QDRANT_SEMANTIC_SEARCH_LIMIT=50
+      - QDRANT_SEMANTIC_SEARCH_PREFETCH_LIMIT=100
+      - QDRANT_SEMANTIC_SEARCH_SCORE_THRESHOLD=0.0
+      - QDRANT_SEMANTIC_SEARCH_TOTAL_SCORE_THRESHOLD=0.0
+      - HUGGINGFACE_INFERENCE_MODEL=http://tei:8989
+      - RERANKER_ENDPOINT=http://tei-reranker:8990
+      - RERANKER_SCORE_THRESHOLD=0.0
+      - RERANKER_RELATIVE_SCORE_CUTOFF=0.05
+      - SPLADE_ENDPOINT=http://tei-splade:8991
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      app-internal-network:
+    depends_on:
+      - infra-bootstrapper
+
+  cocktails-accounts:
+    container_name: cocktails-accounts
+    image: acrveceusgloshared001.azurecr.io/cezziscomaccountsapi:latest
+    restart: unless-stopped
+    ports:
+      - "8016:8016"
+    environment:
+      - ENV=prd
+      - ACCOUNTS_API_ALLOWED_ORIGINS=http://localhost:4001,http://localhost:4002
+      - APIM_HOST_KEY=
+      - ALEMBIC_CONFIG=/app/alembic.ini
+      - AUTH0_MANAGEMENT_DOMAIN=https://cezzis.us.auth0.com
+      - AUTH0_MANAGEMENT_M2M_CLIENT_ID=JtxZM9RiJVHejv6xqkFYdFtdfUrX6N09
+      - AUTH0_DATABASE_CONNECTION_NAME=Username-Password-Authentication
+      - BLOB_STORAGE_CDN_HOSTNAME=localhost:10000
+      - OAUTH_DOMAIN=login.cezzis.com
+      - OAUTH_AUDIENCE=https://cezzis-accounts-api
+      - OAUTH_CLIENT_ID=HZXyiZxjHgkQqeb6UJxmikCGYpSz5iPb
+      - OAUTH_ISSUER=https://login.cezzis.com/
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=cocktails-accounts
+      - OTEL_SERVICE_NAMESPACE=cezzis
+      - DAPR_INIT_JOB_ENABLED=true
+      - DAPR_HOST=dapr-sidecar-accounts-api
+      - DAPR_HTTP_ENDPOINT=http://dapr-sidecar-accounts-api:5396
+      - DAPR_GRPC_ENDPOINT=http://dapr-sidecar-accounts-api:51006
+      - DAPR_HTTP_PORT=5396
+      - DAPR_GRPC_PORT=51006
+      - ZOHO_SMTP_HOST=smtppro.zoho.com
+      - ZOHO_SMTP_PORT=587
+      - ZOHO_DEFAULT_SENDER_EMAIL=cezzi@cezzis.com
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      app-internal-network:
+    depends_on:
+      - dapr-sidecar-accounts-api
+
+  cocktails-web:
+    container_name: cocktails-web
+    image: acrveceusgloshared001.azurecr.io/cocktailsweb:latest
+    restart: unless-stopped
+    ports:
+      - "4000:443"
+      - "4001:80"
+    environment:
+      - VITE_NODE_ENV=prd
+      - VITE_PORT=4001
+      - VITE_TELEMETRY_URL=http://localhost:4318
+      - VITE_AUTH0_DOMAIN=login.cezzis.com
+      - VITE_AUTH0_CLIENT_ID=HZXyiZxjHgkQqeb6UJxmikCGYpSz5iPb
+      - VITE_AUTH0_REDIRECT_URI=http://localhost:4001/iam/auth/redirect/
+      - VITE_AUTH0_COCKTAILS_API_AUDIENCE=https://cezzis-cocktails-api
+      - VITE_AUTH0_ACCOUNTS_API_AUDIENCE=https://cezzis-accounts-api
+      - VITE_COCKTAILS_API_URL=http://localhost:7177
+      - VITE_COCKTAILS_IMAGE_URL=http://localhost:7177/api/v1/images
+      - VITE_AISEARCH_API_URL=http://localhost:8010
+      - VITE_ACCOUNTS_API_URL=http://localhost:8016
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    volumes:
+      - "${DOCKER_LOCAL_CERT_PATH:-$HOME/Github/dev-certs/docker-local}:/etc/nginx/certs:ro"
+    networks:
+      app-internal-network:
+    depends_on:
+      - infra-bootstrapper
+
+  cocktails-mcp:
+    container_name: cocktails-mcp
+    image: acrveceusgloshared001.azurecr.io/cocktailsmcp:latest
+    restart: unless-stopped
+    ports:
+      - "7999:7999"
+    environment:
+      - ENV=prd
+      - PORT=7999
+      - ACCOUNTS_API_HOST=http://cocktails-accounts:8016
+      - ACCOUNTS_API_XKEY=
+      - AISEARCH_API_HOST=http://cocktails-aisearch:8010
+      - AISEARCH_API_XKEY=
+      - AUTH0_ACCOUNTS_API_AUDIENCE=https://cezzis-accounts-api
+      - AUTH0_CLIENT_ID=6pNnUIHVbyakv27TtICiLyAQbXYxNjOQ
+      - AUTH0_DOMAIN=login.cezzis.com
+      - AUTH0_SCOPES="openid offline_access profile email read:owned-account write:owned-account"
+      - CEZZIS_BASE_URL=http://localhost:4001
+      - COCKTAILS_API_HOST=http://cocktails-api:7177
+      - COSMOS_ACCOUNT_ENDPOINT=https://cosmosdb:8081/
+      - COSMOS_CONTAINER_NAME=cezzis-device-auth
+      - COSMOS_DATABASE_NAME=cocktails-db-prd
+      - LOG_LEVEL=info
+      - OTLP_ENDPOINT=http://otel-collector:4318
+      - OTLP_INSECURE=true
+      - OTLP_METRICS_ENABLED=false
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    entrypoint: >
+      sh -c "
+        exec /cezzis-cocktails
+      "
+    networks:
+      app-internal-network:
+    depends_on:
+      - infra-bootstrapper
+
+  cocktails-ingestion-extraction-agent:
+    container_name: cocktails-ingestion-extraction-agent
+    image: acrveceusgloshared001.azurecr.io/cocktailsingestionextractionagent:latest
+    restart: unless-stopped
+    environment:
+      - ENV=prd
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-broker-1:19092
+      - KAFKA_CONSUMER_GROUP=cocktails-ingestion-extraction-agent
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=cocktails-ingestion-extraction-agent
+      - OTEL_SERVICE_NAMESPACE=cezzis
+      - EXTRACTION_AGENT_ENABLED=true
+      - EXTRACTION_AGENT_KAFKA_TOPIC_NAME=cocktails-update-topic-prd
+      - EXTRACTION_AGENT_KAFKA_NUM_CONSUMERS=1
+      - EXTRACTION_AGENT_KAFKA_RESULTS_TOPIC_NAME=cocktails-ingestion-extraction-results-prd
+      - EXTRACTION_AGENT_KAFKA_MAX_POLL_INTERVAL_MS=300000
+      - EXTRACTION_AGENT_KAFKA_AUTO_OFFSET_RESET=earliest
+      - EXTRACTION_AGENT_LLM_MODEL="qwen3:8b"
+      - EXTRACTION_AGENT_USE_LLM=false
+      - LLM_HOST=http://host.docker.internal:11434
+      - LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
+      - LANGFUSE_PUBLIC_KEY=pk-lf-94d15762-3559-47d1-a226-394bc83fa96a
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      app-internal-network:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - infra-bootstrapper
+
+  cocktails-ingestion-chunking-agent:
+    container_name: cocktails-ingestion-chunking-agent
+    image: acrveceusgloshared001.azurecr.io/cocktailsingestionchunkingagent:latest
+    restart: unless-stopped
+    environment:
+      - ENV=prd
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-broker-1:19092
+      - KAFKA_CONSUMER_GROUP=cocktails-ingestion-chunking-agent
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=cocktails-ingestion-chunking-agent
+      - OTEL_SERVICE_NAMESPACE=cezzis
+      - CHUNKING_AGENT_ENABLED=true
+      - CHUNKING_AGENT_KAFKA_TOPIC_NAME=cocktails-ingestion-extraction-results-prd
+      - CHUNKING_AGENT_KAFKA_NUM_CONSUMERS=1
+      - CHUNKING_AGENT_KAFKA_RESULTS_TOPIC_NAME=cocktails-ingestion-chunking-results-prd
+      - CHUNKING_AGENT_KAFKA_MAX_POLL_INTERVAL_MS=1200000
+      - CHUNKING_AGENT_KAFKA_AUTO_OFFSET_RESET=earliest
+      - CHUNKING_AGENT_LLM_MODEL=qwen2.5:7b
+      - CHUNKING_AGENT_LOG_DIR=/chunking-agent/logs/
+      - LLM_HOST=http://host.docker.internal:11434
+      - LANGFUSE_BASE_URL=https://us.cloud.langfuse.com
+      - LANGFUSE_PUBLIC_KEY=pk-lf-94d15762-3559-47d1-a226-394bc83fa96a
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    volumes:
+      - /home/mtnvencenzo/cocktail-logs/prd/ingestion/chunking-agent:/chunking-agent/logs
+    networks:
+      app-internal-network:
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - infra-bootstrapper
+
+  cocktails-ingestion-embedding-agent:
+    container_name: cocktails-ingestion-embedding-agent
+    image: acrveceusgloshared001.azurecr.io/cocktailsingestionembeddingagent:latest
+    restart: unless-stopped
+    environment:
+      - ENV=prd
+      - OAUTH_DOMAIN=login.cezzis.com
+      - OAUTH_CLIENT_ID=akyprIvjnc1g1KHkCeHzzuvuYmf8cz88
+      - OAUTH_AUDIENCE=https://cezzis-aisearch-api
+      - OAUTH_WRITE_EMBEDDINGS_SCOPE=write:embeddings
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=cocktails-ingestion-embedding-agent
+      - OTEL_SERVICE_NAMESPACE=cezzis
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-broker-1:19092
+      - KAFKA_CONSUMER_GROUP=cocktails-ingestion-embedding-agent
+      - EMBEDDING_AGENT_ENABLED=true
+      - EMBEDDING_AGENT_KAFKA_TOPIC_NAME=cocktails-ingestion-chunking-results-prd
+      - EMBEDDING_AGENT_KAFKA_NUM_CONSUMERS=1
+      - AISEARCH_API_BASE_URL=http://cocktails-aisearch:8010
+      - AISEARCH_API_TIMEOUT_SECONDS=60
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    networks:
+      app-internal-network:
+    depends_on:
+      - infra-bootstrapper
+      - cocktails-aisearch
+
+  infra-bootstrapper:
+    container_name: infra-bootstrapper
+    image: acrveceusgloshared001.azurecr.io/cezziscombootstrapper:latest
+    restart: unless-stopped
+    environment:
+      - ENV=prd
+      - ACCOUNT_AVATARS_CONTAINER_NAME=account-avatars-prd
+      - KAFKA_BOOTSTRAP_SERVERS=kafka-broker-1:19092
+      - KAFKA_COCKTAILS_TOPIC_DEFS=cocktails-update-topic-prd,cocktails-ingestion-extraction-results-prd,cocktails-ingestion-chunking-results-prd
+      - KAFKA_DEFAULT_TOPIC_PARTITIONS=4
+      - KAFKA_SECURITY_PROTOCOL=PLAINTEXT
+      - COSMOSDB_ACCOUNT_ENDPOINT=https://cosmosdb:8081/
+      - COSMOSDB_COCKTAILS_DATABASE_NAME=cocktails-db-prd
+      - COSMOSDB_COCKTAILS_CONTAINER_DEFS=cezzis-cocktails-cocktail:/id,cezzis-cocktails-ingredient:/id,cezzis-device-auth:/id
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_SERVICE_NAME=cezzis-com-bootstrapper
+      - OTEL_SERVICE_NAMESPACE=cezzis
+      - RABBITMQ_VHOST=cezzis-prd
+      - RABBITMQ_HOST=http://rabbitmq
+      - RABBITMQ_PORT=5671
+      - RABBITMQ_ADMIN_PORT=15672
+      - RABBITMQ_ADMIN_USERNAME=admin
+      - RABBITMQ_APP_USERNAME=cezzis-app-user-prd
+      - RABBITMQ_APP_CONFIG_FILE_PATH=/config/rabbitmq.json
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - QDRANT_API_KEY=
+      - QDRANT_COLLECTION_NAME=cocktails-prd
+      - QDRANT_VECTOR_SIZE=768
+      - QDRANT_USE_HTTPS=false
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
+    volumes:
+      - /home/mtnvencenzo/Github/cezzis-com-local-bootstrapper/rabbitmq.json:/config/rabbitmq.json:ro
+    entrypoint: >
+      sh -c "
+        cezzis-com-bootstrapper;
+        tail -f /dev/null
+      "
+    networks:
+      app-internal-network:
+
+  dapr-sidecar-cocktails-api:
+    container_name: dapr-sidecar-cocktails-api
+    image: daprio/daprd:latest
+    restart: unless-stopped
+    ports:
+      - "3500:3500"
+      - "50001:50001"
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=prd
+    command: >
+      ./daprd
+        --app-id cocktails-api-dapr
+        --app-port 7177
+        --app-protocol http
+        --dapr-http-port 3500
+        --dapr-grpc-port 50001
+        --resources-path /components
+        --config /components/config.yaml
+        --enable-metrics false
+        --enable-api-logging false
+        --placement-host-address ''
+        --scheduler-host-address 'dapr-scheduler:50004'
+        --app-channel-address cocktails-api
+    volumes:
+      - ../cezzis-com-cocktails-api/.dapr/prd:/components
+    networks:
+      app-internal-network:
+    depends_on:
+      - dapr-scheduler
+      - infra-bootstrapper
+
+  dapr-sidecar-accounts-api:
+    container_name: dapr-sidecar-accounts-api
+    image: daprio/daprd:latest
+    restart: unless-stopped
+    ports:
+      - "5396:5396"
+      - "51006:51006"
+    environment:
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=prd
+    command: >
+      ./daprd
+        --app-id accounts-api-dapr
+        --app-port 8016
+        --app-protocol http
+        --dapr-http-port 5396
+        --dapr-grpc-port 51006
+        --resources-path /components
+        --config /components/config.yaml
+        --enable-metrics false
+        --enable-api-logging false
+        --placement-host-address ''
+        --scheduler-host-address 'dapr-scheduler:50004'
+        --app-channel-address cocktails-accounts
+    volumes:
+      - ../cezzis-com-accounts-api/.dapr/prd:/components
+    networks:
+      app-internal-network:
+    depends_on:
+      - dapr-scheduler
+      - infra-bootstrapper
+
+  dapr-scheduler:
+    container_name: dapr-scheduler-cezzis
+    image: daprio/dapr:latest
+    command: ["./scheduler", "--port", "50004", "--etcd-data-dir", "/data"]
+    ports:
+      - "50004:50004"
+      - "52378:2379"
+    restart: unless-stopped
+    volumes:
+      - vol_scheduler:/data
+    networks:
+      app-internal-network:
+    user: "0:0"
+
+
+networks:
+  app-internal-network:
+    external: true
+    name: app-internal-network
+
+volumes:
+  vol_scheduler:
