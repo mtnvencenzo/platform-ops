@@ -45,7 +45,7 @@ spec:
                   name: kafka-platform-config
                   key: SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL
             - name: SCHEMA_REGISTRY_LOG4J_ROOT_LOGLEVEL
-              value: DEBUG
+              value: INFO
           resources:
             requests:
               cpu: "250m"
