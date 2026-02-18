@@ -157,9 +157,9 @@ helm version
 
 <br />
 
-## Enable NVIDIA GPU Support in k3d
+## [Optional] Enable NVIDIA GPU Support on the Host
 
-### Step 1. Install NVIDIA Drivers on the Host
+### Step 1: Install NVIDIA Drivers on the Host
 
 Make sure your host system has the latest NVIDIA drivers installed.  
 You can check with:
@@ -170,7 +170,7 @@ nvidia-smi
 
 If not installed, follow the official NVIDIA instructions for your OS.
 
-### Step 2. Install NVIDIA Container Toolkit
+### Step 2: Install NVIDIA Container Toolkit
 
 This allows Docker to use the GPU.
 
@@ -185,28 +185,52 @@ sudo apt-get install -y nvidia-docker2
 sudo systemctl restart docker
 ```
 
-### Step 3. Install the NVIDIA Device Plugin in Kubernetes
+## [Optional] Install the NVIDIA GPU Operator in the Cluster
 
-```bash
-kubectl apply -f https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.17.0/deployments/static/nvidia-device-plugin.yml
+### Step 1: Add the helm repository
+
+``` shell
+helm repo add nvidia https://helm.ngc.nvidia.com/nvidia
+helm repo update
 ```
 
-### Step 4. Create the NVIDIA RuntimeClass
+### Step 2: Install the Operator
+Set the toolkit.env variables to match K3s's internal paths.
 
-```yaml
-apiVersion: node.k8s.io/v1
-kind: RuntimeClass
-metadata:
-  name: nvidia
-handler: nvidia
+``` shell
+# helm install --wait --generate-name -n gpu-operator --create-namespace nvidia/gpu-operator
+
+helm install gpu-operator nvidia/gpu-operator \
+  -n gpu-operator --create-namespace \
+  --set toolkit.env[0].name=CONTAINERD_CONFIG \
+  --set toolkit.env[0].value=/var/lib/rancher/k3s/agent/etc/containerd/config.toml \
+  --set toolkit.env[1].name=CONTAINERD_SOCKET \
+  --set toolkit.env[1].value=/run/k3s/containerd/containerd.sock \
+  --set driver.enabled=false  # Use host-installed drivers passed via Docker
+```
+_Note: driver.enabled=false is used because k3d runs inside Docker, which already has access to the host's drivers._
+
+
+### Step 3: Enable GPU sharing
+
+``` shell
+kubectl apply -f k8s-setup/time-slicing-config-all.yaml
+kubectl patch clusterpolicy/cluster-policy -n gpu-operator --type merge -p '{"spec": {"devicePlugin": {"config": {"name": "time-slicing-config-all", "default": "any"}}}}'
 ```
 
-Apply it:
+### Step 4: Verify GPU Availability
+Once the operator pods are running, verify the nodes have allocatable GPUs:
 
-```bash
-kubectl apply -f k8s-setup/nvidia-runtime-class.yml
+``` shell
+kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
 ```
 
+### Step 5: Run a test Workload
+Deploy a pod that requests a GPU to ensure everything is connected:
+
+``` shell
+kubectl apply -f k8s-setup/cuda-test.yml
+```
 
 <br />
 
@@ -268,7 +292,7 @@ kubectl create namespace cattle-system
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
   --set hostname=localhost \
-  --set ingress.tls.source=none \
+  --set ingress.tls.source=certmanager \
   --set ingress.enabled=true \
   --set replicas=1 \
   --set global.cattle.ingress.class=traefik
@@ -278,6 +302,13 @@ _The installation may take a few minutes. You can check the status by watching t
 
 ``` shell
 kubectl get pods -n cattle-system --watch
+```
+
+### Step 7: Patch rancher to use the cluster wide certificate issuer
+
+``` shell
+kubectl patch certificate tls-rancher-ingress -n cattle-system \
+--type='json' -p='[{"op": "replace", "path": "/spec/issuerRef", "value": {"group": "cert-manager.io", "kind": "ClusterIssuer", "name": "selfsigned-cluster-issuer"}}]'
 ```
 
 ### Step 7: Login to Rancher

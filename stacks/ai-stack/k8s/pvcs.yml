@@ -12,21 +12,21 @@ spec:
   resources:
     requests:
       storage: 10Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: hf-cache
-  namespace: ai-platform
-  labels:
-    app.kubernetes.io/part-of: ai-platform
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 20Gi
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: hf-cache
+#   namespace: ai-platform
+#   labels:
+#     app.kubernetes.io/part-of: ai-platform
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: local-path
+#   resources:
+#     requests:
+#       storage: 20Gi
 #---
 # apiVersion: v1
 # kind: PersistentVolumeClaim
