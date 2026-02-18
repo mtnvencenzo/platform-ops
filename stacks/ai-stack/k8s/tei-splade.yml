@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: tei-splade
-          image: ghcr.io/huggingface/text-embeddings-inference:1.8
+          image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
           args:
             - "--model-id"
             - "$(TEI_SPLADE_MODEL_ID)"
