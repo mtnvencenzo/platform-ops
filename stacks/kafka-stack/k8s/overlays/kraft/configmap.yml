@@ -23,7 +23,7 @@ data:
   KAFKA_MIN_INSYNC_REPLICAS: "1"
 
   # Schema Registry
-  SCHEMA_REGISTRY_HOST_NAME: "kafka-schema-registry"
+  SCHEMA_REGISTRY_HOST_NAME: "schema-registry"
   SCHEMA_REGISTRY_LISTENERS: "http://0.0.0.0:8081"
   SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: "kafka-broker-1.kafka-platform.svc.cluster.local:19092"
   SCHEMA_REGISTRY_KAFKASTORE_SECURITY_PROTOCOL: "PLAINTEXT"
@@ -32,7 +32,7 @@ data:
   KAFKA_CLUSTERS_0_NAME: "local"
   KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka-broker-1.kafka-platform.svc.cluster.local:19092"
   KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL: "PLAINTEXT"
-  KAFKA_CLUSTERS_0_SCHEMAREGISTRY: "http://kafka-schema-registry.kafka-platform.svc.cluster.local:8081"
+  KAFKA_CLUSTERS_0_SCHEMAREGISTRY: "http://schema-registry.kafka-platform.svc.cluster.local:8081"
   DYNAMIC_CONFIG_ENABLED: "true"
 ---
 apiVersion: v1

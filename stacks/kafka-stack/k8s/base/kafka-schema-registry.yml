@@ -1,23 +1,24 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-schema-registry
+  name: schema-registry
   namespace: kafka-platform
   labels:
-    app: kafka-schema-registry
+    app: schema-registry
     app.kubernetes.io/part-of: kafka-platform
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kafka-schema-registry
+      app: schema-registry
   template:
     metadata:
       labels:
-        app: kafka-schema-registry
+        app: schema-registry
     spec:
+      enableServiceLinks: false
       containers:
-        - name: kafka-schema-registry
+        - name: schema-registry
           image: confluentinc/cp-schema-registry:8.1.0
           ports:
             - containerPort: 8081
@@ -56,15 +57,15 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-schema-registry
+  name: schema-registry
   namespace: kafka-platform
   labels:
-    app: kafka-schema-registry
+    app: schema-registry
     app.kubernetes.io/part-of: kafka-platform
 spec:
   type: ClusterIP
   selector:
-    app: kafka-schema-registry
+    app: schema-registry
   ports:
     - name: http
       port: 8081

@@ -3,6 +3,6 @@ kind: Kustomization
 
 resources:
   - namespace.yml
-  - kafka-schema-registry.yml
+  - schema-registry.yml
   - kafka-ui.yml
   - ingress.yml
