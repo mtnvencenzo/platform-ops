@@ -93,7 +93,11 @@ All containers run within a dedicated `azure-network` bridge network for secure 
 
 **Connection String:**
 ```
+# Docker compose
 DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://127.0.0.1:10000/devstoreaccount1;QueueEndpoint=http://127.0.0.1:10001/devstoreaccount1;TableEndpoint=http://127.0.0.1:10002/devstoreaccount1;
+
+# K8s Cluster
+DefaultEndpointsProtocol=http;AccountName=devstoreaccount1;AccountKey=Eby8vdM02xNOcqFlqUwJPLlmEtlCDXJ1OUzFT50uSRZ6IFsuFq2UVErCz4I6tq/K1SZFPTOtr/KBHBeksoGMGw==;BlobEndpoint=http://azure-blob.127.0.0.1.sslip.io:8080/devstoreaccount1;QueueEndpoint=http://azure-queue.127.0.0.1.sslip.io:8080/devstoreaccount1;TableEndpoint=http://azure-table.127.0.0.1.sslip.io:8080/devstoreaccount1;
 ```
 
 **Test Connection:**

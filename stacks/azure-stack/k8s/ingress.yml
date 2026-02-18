@@ -9,19 +9,8 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-    # Cosmos DB – accessible at http://cosmosdb.127.0.0.1.sslip.io:8080
-    - host: cosmosdb.127.0.0.1.sslip.io
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: cosmosdb
-                port:
-                  number: 1234
     # Azurite – accessible at http://azurite.127.0.0.1.sslip.io:8080
-    - host: azurite.127.0.0.1.sslip.io
+    - host: azure-blob.127.0.0.1.sslip.io
       http:
         paths:
           - path: /
@@ -31,3 +20,35 @@ spec:
                 name: azurite
                 port:
                   number: 10000
+    - host: azure-queue.127.0.0.1.sslip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azurite
+                port:
+                  number: 10001
+    - host: azure-table.127.0.0.1.sslip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: azurite
+                port:
+                  number: 10002
+    # Cosmos DB – accessible at http://cosmosdb.127.0.0.1.sslip.io:8080
+    # - host: cosmosdb.127.0.0.1.sslip.io
+    #   http:
+    #     paths:
+    #       - path: /
+    #         pathType: Prefix
+    #         backend:
+    #           service:
+    #             name: cosmosdb
+    #             port:
+    #               number: 1234
+

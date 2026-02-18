@@ -26,6 +26,19 @@ kubectl apply -f k8s/pgadmin.yml    # depends on postgres
 kubectl apply -f k8s/ingress.yml
 ```
 
+You may need to add the client address list to the config file
+
+``` shell
+# Update pg_hba.config
+echo "host all all 10.42.0.0/16 trust" >> /var/lib/postgresql/data/pg_hba.conf
+
+# Reload config
+psql -U admin -d postgres -c "SELECT pg_reload_conf();"
+
+# Verify config
+psql -U admin -d postgres -c "SELECT line_number, type, address, auth_method, error FROM pg_hba_file_rules ORDER BY line_number DESC LIMIT 1;"
+```
+
 ## Cross-namespace Access
 
 ```

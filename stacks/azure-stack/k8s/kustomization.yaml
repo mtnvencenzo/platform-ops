@@ -6,7 +6,7 @@ resources:
   - configmap.yml
   - pvcs.yml
   - azurite.yml
-  - cosmosdb.yml
+  # - cosmosdb.yml
   # - sqlserver.yml
   # - eventhubs.yml
   # - servicebus.yml

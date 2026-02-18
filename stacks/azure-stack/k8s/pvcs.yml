@@ -12,21 +12,21 @@ spec:
   resources:
     requests:
       storage: 5Gi
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: cosmosdb-data
-  namespace: azure-platform
-  labels:
-    app.kubernetes.io/part-of: azure-platform
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 5Gi
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: cosmosdb-data
+#   namespace: azure-platform
+#   labels:
+#     app.kubernetes.io/part-of: azure-platform
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   storageClassName: local-path
+#   resources:
+#     requests:
+#       storage: 5Gi
 # ---
 # apiVersion: v1
 # kind: PersistentVolumeClaim
