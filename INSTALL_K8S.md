@@ -59,12 +59,13 @@ k3d cluster delete prd-local-apps-001
 
 k3d cluster create prd-local-apps-001 \
   -p "8080:80@loadbalancer" \
-  -p "6443:443@loadbalancer" \
+  -p "8443:443@loadbalancer" \
   --k3s-arg "max-pods=200@server:*;agent:*" \
-  --api-port 6445 \
+  --api-port 6443 \
   --servers 1 \
   --agents 1 \
-  --gpus all
+  --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*" \
+  --gpus all \
 ```
 
 ### Step 2: Verify the Cluster 
@@ -253,6 +254,8 @@ helm install cert-manager jetstack/cert-manager \
   --version v1.19.3 \
   --set installCRDs=true
 
+kubectl get pods -n cert-manager
+
 # If reinstalling rancher and already had CRDs from cert manager run these commands
 kubectl get crds | grep cattle
 kubectl delete crd $(kubectl get crds | grep cattle | awk '{print $1}')
@@ -265,6 +268,9 @@ _Note: Check the cert-manager documentation for the latest version and CRD insta
 
 ``` shell
 kubectl apply -f k8s-setup/cluster-cert-issuer.yml
+
+# verify
+kubectl get clusterissuer selfsigned-cluster-issuer
 ```
 
 
@@ -276,13 +282,7 @@ helm repo add rancher-latest https://releases.rancher.com/server-charts/latest
 helm repo update
 ```
 
-### Step 5: Create a namespace for the Rancher server:
-
-``` shell
-kubectl create namespace cattle-system
-```
-
-### Step 6: Install Rancher, setting the hostname to localhost and specifying the exposed ports:
+### Step 5: Install Rancher, setting the hostname to localhost and specifying the exposed ports:
 
 ``` shell
 # The hostname=localhost is important for local testing.
@@ -291,11 +291,13 @@ kubectl create namespace cattle-system
 
 helm install rancher rancher-latest/rancher \
   --namespace cattle-system \
+  --create-namespace \
   --set hostname=localhost \
-  --set ingress.tls.source=certmanager \
-  --set ingress.enabled=true \
   --set replicas=1 \
-  --set global.cattle.ingress.class=traefik
+  --set ingress.enabled=true \
+  --set global.cattle.ingress.class=traefik \
+  --set ingress.tls.source=secret \
+  --set 'ingress.extraAnnotations.cert-manager\.io/cluster-issuer=selfsigned-cluster-issuer'
 ```
 
 _The installation may take a few minutes. You can check the status by watching the pods in the cattle-system namespace_
@@ -304,11 +306,12 @@ _The installation may take a few minutes. You can check the status by watching t
 kubectl get pods -n cattle-system --watch
 ```
 
-### Step 7: Patch rancher to use the cluster wide certificate issuer
+### Step 6: Patch rancher to use the cluster wide certificate issuer
 
 ``` shell
-kubectl patch certificate tls-rancher-ingress -n cattle-system \
---type='json' -p='[{"op": "replace", "path": "/spec/issuerRef", "value": {"group": "cert-manager.io", "kind": "ClusterIssuer", "name": "selfsigned-cluster-issuer"}}]'
+# shouldn't be needed anymore due to the helm install command and extra annotations
+# kubectl patch certificate tls-rancher-ingress -n cattle-system \
+# --type='json' -p='[{"op": "replace", "path": "/spec/issuerRef", "value": {"group": "cert-manager.io", "kind": "ClusterIssuer", "name": "selfsigned-cluster-issuer"}}]'
 ```
 
 ### Step 7: Login to Rancher
@@ -349,6 +352,9 @@ Create a dedicated namespace and install the chart. Since this is a local k3d en
 helm install argocd argo/argo-cd \
   --namespace argocd \
   --create-namespace
+
+# verify
+kubectl get pods -n argocd
 ```
 
 ### Step 3: Create a Rancher Ingress
@@ -385,3 +391,10 @@ Username: admin
 
 _Note: if using an non standard (80) port number like 8080 for the cluster then that port would need to be used on the ingress urls when access them_
 
+
+## Argo CD Image Updater
+Add the argo cd image updater to the cluster and within the argocd namespace
+
+``` shell
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/config/install.yaml
+```

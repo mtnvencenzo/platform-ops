@@ -6,7 +6,7 @@ Kubernetes manifests for deploying Redis and Redis Insight to a local k3d cluste
 
 | Service | Description | Internal Port | K8s Service |
 |---|---|---|---|
-| **Redis** | In-memory data store (Alpine) | 6379 | `redis:6379` |
+| **Redis** | In-memory data store (Alpine) | 6380 | `redis:6380` |
 | **Redis Insight** | Web UI for Redis management | 5540 | `redis-insight:5540` |
 
 ## Deploy
@@ -28,7 +28,7 @@ kubectl apply -f k8s/ingress.yml
 ## Cross-namespace Access
 
 ```
-redis.redis-platform.svc.cluster.local:6379
+redis.redis-platform.svc.cluster.local:6380
 ```
 
 ## Access
@@ -40,7 +40,7 @@ redis.redis-platform.svc.cluster.local:6379
 ### Port Forwarding (alternative)
 
 ```bash
-kubectl port-forward -n redis-platform svc/redis 6379:6379
+kubectl port-forward -n redis-platform svc/redis 6380:6379
 ```
 
 ## Cleanup

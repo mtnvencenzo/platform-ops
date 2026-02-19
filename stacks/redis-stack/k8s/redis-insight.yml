@@ -28,7 +28,7 @@ spec:
             - name: RI_REDIS_HOST
               value: "redis"
             - name: RI_REDIS_PORT
-              value: "6379"
+              value: "6380"
             - name: RI_REDIS_TLS_ENABLED
               value: "false"
           volumeMounts:

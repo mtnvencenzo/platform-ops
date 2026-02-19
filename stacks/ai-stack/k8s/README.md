@@ -20,18 +20,6 @@ Kubernetes manifests for deploying the AI stack to a local k3d cluster.
 - [NVIDIA k8s device plugin](https://github.com/NVIDIA/k8s-device-plugin) installed in the cluster
 - `nvidia` RuntimeClass configured (for Ollama and TEI services)
 
-### GPU Setup for k3d
-
-To pass your GPU into k3d, create your cluster with the NVIDIA runtime:
-
-```bash
-k3d cluster create prd-local-apps-001 \
-  -p "8080:80@loadbalancer" \
-  -p "8443:443@loadbalancer" \
-  --agents 2
-  --gpus all
-```
-
 Install the NVIDIA device plugin:
 
 ```bash
