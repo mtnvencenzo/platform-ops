@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: openobserve
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: openobserve-platform
+  labels:
+    app.kubernetes.io/part-of: openobserve-platform
+data:
+  otel-collector-config.yml: |
+    receivers:
+      otlp/insecure:
+        protocols:
+          grpc:
+            endpoint: "0.0.0.0:4317"
+            auth:
+              authenticator: bearertokenauth/server
+          http:
+            endpoint: "0.0.0.0:4318"
+            auth:
+              authenticator: bearertokenauth/server
+            cors:
+              allowed_origins: [
+                "https://localhost:4001",
+                "http://localhost:4001",
+                "https://localhost:4002",
+                "http://localhost:4002"
+              ]
+              allowed_headers: ["*"]
+              max_age: 600
+
+    processors:
+      batch:
+        timeout: 10s
+        send_batch_size: 100
+
+    exporters:
+      otlp/openobserve:
+        endpoint: "openobserve:5081"
+        tls:
+          insecure: true
+        headers:
+          Authorization: "Basic YWRtaW5AZXhhbXBsZS5jb206Q29tcGxleFBhc3N3b3JkIzEyMw==" # echo -n "admin@example.com:ComplexPassword#123" | base64
+
+    extensions:
+      bearertokenauth/server:
+        tokens:
+          - "9c8602c7-6108-4df7-a569-692b06b1e630" # 1
+          - "bd97d99d-f52d-4827-84d5-3760cbc2c8ea" # 2
+          - "00d164bd-2d3d-4d62-8280-e507637def73" # 3
+          - "ad48fafc-3bf1-40d8-ae9c-89a42c5dcc06" # 4
+          - "c2969966-8d8c-4c7c-a4ae-e3b7d491aa24" # 5
+          - "e1851dfc-357a-4908-bda5-a68861d4648a" # 6
+
+    service:
+      extensions: [bearertokenauth/server]
+      pipelines:
+        traces:
+          receivers: [otlp/insecure]
+          processors: [batch]
+          exporters: [otlp/openobserve]
+        metrics:
+          receivers: [otlp/insecure]
+          processors: [batch]
+          exporters: [otlp/openobserve]
+        logs:
+          receivers: [otlp/insecure]
+          processors: [batch]
+          exporters: [otlp/openobserve]

@@ -1,0 +1,42 @@
+name: openobserve-stack
+
+services:
+  openobserve:
+    container_name: openobserve
+    image: openobserve/openobserve:latest
+    ports:
+      - "5080:5080"
+      - "5081:5081"
+    environment:
+      - ZO_DATA_DIR=/data
+      - ZO_ROOT_USER_EMAIL=admin@example.com
+      - ZO_ROOT_USER_PASSWORD=ComplexPassword#123
+    restart: unless-stopped
+    volumes:
+      - vol_openobserve:/data
+    networks:
+      app-internal-network:
+
+
+  otel-collector:
+    container_name: otel-collector
+    image: otel/opentelemetry-collector-contrib:0.134.1 
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml # Mount your OTel Collector config
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    restart: unless-stopped
+    depends_on:
+      - openobserve
+    networks:
+      app-internal-network:
+
+networks:
+  app-internal-network:
+    external: true
+    name: app-internal-network
+
+volumes:
+  vol_openobserve:
