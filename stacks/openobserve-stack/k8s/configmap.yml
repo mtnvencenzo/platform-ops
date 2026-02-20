@@ -45,7 +45,8 @@ data:
           insecure: true
         headers:
           Authorization: "Basic YWRtaW5AZXhhbXBsZS5jb206Q29tcGxleFBhc3N3b3JkIzEyMw==" # echo -n "admin@example.com:ComplexPassword#123" | base64
-
+          organization: "default"
+          
     extensions:
       bearertokenauth/server:
         tokens:
