@@ -391,10 +391,47 @@ Username: admin
 
 _Note: if using an non standard (80) port number like 8080 for the cluster then that port would need to be used on the ingress urls when access them_
 
+<br />
 
 ## Argo CD Image Updater
 Add the argo cd image updater to the cluster and within the argocd namespace
 
 ``` shell
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj-labs/argocd-image-updater/stable/config/install.yaml
+```
+
+### Configure Argocd Image Updater for Azure Container Registry 
+The Image Updater needs its own access to the registry's API to check for new tags
+
+``` shell
+kubectl create secret generic acr-admin-creds \
+  --from-literal=username=acrveceusgloshared001  \
+  --from-literal=password=<ACR-Admin-Password> \
+  -n argocd
+```
+
+### Edit the config map
+Because the install was from github we have to manually edit the config map to add the registry config.  Inside the editor, add the registries.conf block under data:.
+
+Navigate to Rancher and select More Resources > Core > ConfigMaps and find the argocd-image-updater-config.  It should look something like this after adding he repository to the data section:
+
+``` yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-image-updater-config
+  namespace: argocd
+data:
+  registries.conf: |
+    registries:
+    - name: Azure Container Registry
+      prefix: acrveceusgloshared001.azurecr.io
+      api_url: https://acrveceusgloshared001.azurecr.io
+      credentials: secret:argocd/acr-admin-creds
+```
+
+### Restart the image updater
+The Image Updater doesn't always hot-reload registries.conf changes. Restart the pod to be safe:
+```
+kubectl rollout restart deployment argocd-image-updater-controller -n argocd
 ```
