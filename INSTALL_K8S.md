@@ -60,6 +60,8 @@ k3d cluster delete prd-local-apps-001
 k3d cluster create prd-local-apps-001 \
   -p "8080:80@loadbalancer" \
   -p "8443:443@loadbalancer" \
+  -p "30672:30672@loadbalancer" \
+  -p "30092:30092@loadbalancer" \
   --k3s-arg "max-pods=200@server:*;agent:*" \
   --api-port 6443 \
   --servers 1 \
@@ -67,8 +69,13 @@ k3d cluster create prd-local-apps-001 \
   --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*" \
   --gpus all \
 
-# add more ports to the lb
-k3d cluster edit prd-local-apps-001 --port-add 30092:30092@loadbalancer
+# add more ports to the lb (adding node ports is not enough, need to tell the cluster lb to map the ports as well)
+# The additional cluter lb port mappings are already
+# added to the cluster create command
+# rabbitmq
+# k3d cluster edit prd-local-apps-001 --port-add 30672:30672@loadbalancer
+# kafka
+# k3d cluster edit prd-local-apps-001 --port-add 30092:30092@loadbalancer
 ```
 
 ### Step 2: Verify the Cluster 
