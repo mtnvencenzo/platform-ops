@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: kafka-ext-ports
+  name: kafka-ext-broker-1
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
