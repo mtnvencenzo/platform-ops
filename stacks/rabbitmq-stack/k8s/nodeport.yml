@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rabbitmq-amqp
+  namespace: rabbitmq-platform
+  labels:
+    app.kubernetes.io/part-of: rabbitmq-platform
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/part-of: rabbitmq-platform
+  ports:
+    - name: amqp
+      port: 5672
+      targetPort: 5672
+      nodePort: 30672
