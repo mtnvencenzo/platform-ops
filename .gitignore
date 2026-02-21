@@ -7,3 +7,5 @@
 .env-local
 
 docker-compose.override.yaml
+
+mtnvencenzo-argocd-writeback-app.private-key.pem

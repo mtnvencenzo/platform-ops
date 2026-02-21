@@ -446,3 +446,30 @@ The Image Updater doesn't always hot-reload registries.conf changes. Restart the
 ```
 kubectl rollout restart deployment argocd-image-updater-controller -n argocd
 ```
+
+### Use the git writeback method
+
+#### Step 1: Create a github app
+Name: mtnvencenzo-argocd-writeback-app
+Home page is reuqired  
+Make sure it has repository permissions read/write.  
+
+After creating it generate and download the private key
+After creating it click 'Install App' and select for all repositories.
+-- You will be redirected to the installation/config page.  The installation Id is in the browser url, you will need this.  Ex https://github.com/settings/installations/000000000
+
+installationid=111603325
+
+#### Step 2: Create the secret in the cluster (argocd namespace)
+
+``` shell
+kubectl -n argocd create secret generic git-creds \
+  --from-literal=githubAppID=2918282 \
+  --from-literal=githubAppInstallationID=111603325 \
+  --from-file=githubAppPrivateKey=mtnvencenzo-argocd-writeback-app.private-key.pem
+```
+
+#### Step 3: Update each repositories bypass list to include the app __mtnvencenzo-argocd-writeback-app__
+Make sure to select 'Exempt from rules'
+
+#### Step 4:  Ensure you exclude the directory that the argo cd version file gets written to from triggering a build or you'll end up in an infinite look of creating new images
