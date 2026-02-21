@@ -6,3 +6,4 @@ resources:
   - configmap.yml
   - pvcs.yml
   - kafka-broker.yml
+  - nodeport.yml

@@ -8,3 +8,4 @@ resources:
   - kafka-broker-1.yml
   - kafka-broker-2.yml
   - kafka-broker-3.yml
+  - nodeport.yml

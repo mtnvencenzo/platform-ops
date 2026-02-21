@@ -35,9 +35,9 @@ spec:
             - name: KAFKA_BROKER_ID
               value: "3"
             - name: KAFKA_LISTENERS
-              value: "PLAINTEXT://0.0.0.0:9095,PLAINTEXT_INTERNAL://0.0.0.0:19095,CONTROLLER://kafka-broker-3:9094"
+              value: "PLAINTEXT://0.0.0.0:9095,PLAINTEXT_INTERNAL://0.0.0.0:19095,CONTROLLER://kafka-broker-3:9094,EXTERNAL://0.0.0.0:30095"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "PLAINTEXT://localhost:9095,PLAINTEXT_INTERNAL://kafka-broker-3:19095"
+              value: "PLAINTEXT://localhost:9095,PLAINTEXT_INTERNAL://kafka-broker-3:19095,EXTERNAL://localhost:30095"
           envFrom:
             - configMapRef:
                 name: kafka-platform-config

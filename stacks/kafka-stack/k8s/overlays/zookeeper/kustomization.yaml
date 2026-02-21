@@ -7,3 +7,4 @@ resources:
   - pvcs.yml
   - zookeeper.yml
   - kafka-broker.yml
+  - nodeport.yml
