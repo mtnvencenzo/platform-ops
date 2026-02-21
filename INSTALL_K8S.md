@@ -414,9 +414,10 @@ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj-labs/argoc
 The Image Updater needs its own access to the registry's API to check for new tags
 
 ``` shell
-kubectl create secret generic acr-admin-creds \
-  --from-literal=username=acrveceusgloshared001  \
-  --from-literal=password=<ACR-Admin-Password> \
+kubectl create secret docker-registry acr-pull-secret \
+  --docker-server=acrveceusgloshared001.azurecr.io \
+  --docker-username=acrveceusgloshared001 \
+  --docker-password=<ACR-Admin-Password> \
   -n argocd
 ```
 
