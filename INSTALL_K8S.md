@@ -66,6 +66,9 @@ k3d cluster create prd-local-apps-001 \
   --agents 1 \
   --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*" \
   --gpus all \
+
+# add more ports to the lb
+k3d cluster edit prd-local-apps-001 --port-add 30092:30092@loadbalancer
 ```
 
 ### Step 2: Verify the Cluster 
