@@ -8,7 +8,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app.kubernetes.io/part-of: kafka-platform
+    app: kafka-broker-1
   ports:
     - name: kafka-broker-1
       port: 9092
