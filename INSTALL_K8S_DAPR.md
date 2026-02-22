@@ -27,7 +27,17 @@ helm upgrade --install dapr dapr/dapr \
 kubectl get pods --namespace dapr-system
 ```
 
-_*optionally install the dapr dashboard_
+## Step 3: [Optional] Allow external access to the scheduler
+Optionally add a node port to the scheduler so it's available outside the cluster.
+This is helpful for local development.
+
+``` shell
+kubectl apply -f k8s-setup/dapr-scheduler-nodeport.yml
+```
+
+## Step 4: [Optional] Install the dapr dashboard
+Optionally install the dapr dashboard
+
 ``` shell
 helm install dapr-dashboard dapr/dapr-dashboard --namespace dapr-system
 ```

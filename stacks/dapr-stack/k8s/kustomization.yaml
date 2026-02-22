@@ -6,3 +6,4 @@ resources:
   - pvcs.yml
   - dapr-placement.yml
   - dapr-scheduler.yml
+  - dapr-scheduler-nodeport.yml

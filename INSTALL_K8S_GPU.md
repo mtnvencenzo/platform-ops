@@ -60,7 +60,7 @@ _Note: driver.enabled=false is used because k3d runs inside Docker, which alread
 ### Step 3: Enable GPU sharing
 
 ``` shell
-kubectl apply -f k8s-setup/time-slicing-config-all.yaml
+kubectl apply -f k8s-setup/time-slicing-config-all.yml
 kubectl patch clusterpolicy/cluster-policy -n gpu-operator --type merge -p '{"spec": {"devicePlugin": {"config": {"name": "time-slicing-config-all", "default": "any"}}}}'
 ```
 
