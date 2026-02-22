@@ -6,7 +6,7 @@ metadata:
 spec:
   type: NodePort
   selector:
-    app: dapr-scheduler
+    app: dapr-scheduler-server
   ports:
     - protocol: TCP
       port: 50006      # Internal gRPC port
