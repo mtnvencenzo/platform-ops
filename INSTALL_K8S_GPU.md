@@ -51,7 +51,8 @@ helm install gpu-operator nvidia/gpu-operator \
   --set toolkit.env[0].value=/var/lib/rancher/k3s/agent/etc/containerd/config.toml \
   --set toolkit.env[1].name=CONTAINERD_SOCKET \
   --set toolkit.env[1].value=/run/k3s/containerd/containerd.sock \
-  --set driver.enabled=false  # Use host-installed drivers passed via Docker
+  --set driver.enabled=false \
+  --set toolkit.enabled=false
 ```
 _Note: driver.enabled=false is used because k3d runs inside Docker, which already has access to the host's drivers._
 

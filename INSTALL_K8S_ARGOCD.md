@@ -91,7 +91,7 @@ data:
     - name: Azure Container Registry
       prefix: acrveceusgloshared001.azurecr.io
       api_url: https://acrveceusgloshared001.azurecr.io
-      credentials: secret:argocd/acr-pull-secret
+      credentials: pullsecret:argocd/acr-pull-secret
 ```
 
 ### Restart the image updater

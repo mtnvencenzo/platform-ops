@@ -126,7 +126,7 @@ k3d cluster create prd-local-apps-001 \
   --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*" \
   --gpus all \
   --k3s-arg "--disable=metrics-server@server:0" \
-  --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*"
+  --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*"
 
 # add more ports to the lb (adding node ports is not enough, need to tell the cluster lb to map the ports as well)
 # The additional cluter lb port mappings are already added to the cluster create command above
@@ -136,7 +136,7 @@ k3d cluster create prd-local-apps-001 \
 # k3d cluster edit prd-local-apps-001 --port-add 30092:30092@loadbalancer
 ```
 
-### Step 2: Verify the Cluster 
+### Step 3: Verify the Cluster 
 Use kubectl (installed automatically with k3d or installed separately) to verify: 
 
 ```  shell

@@ -60,4 +60,6 @@ kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs
 ``` shell
 # cezzis.com bootstrapper
 kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/cezzis-com-local-bootstrapper/refs/heads/main/.iac/argocd/cezzis-com-local-boostrapper.yaml
+
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/cezzis-com-local-bootstrapper/refs/heads/main/.iac/argocd/image-updater.yaml
 ```
