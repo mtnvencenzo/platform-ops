@@ -58,6 +58,6 @@ kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs
 ## Commands to install cezzis.com stacks via argo cd with the image updater
 
 ``` shell
-# postgres stack
+# cezzis.com bootstrapper
 kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/cezzis-com-local-bootstrapper/refs/heads/main/.iac/argocd/cezzis-com-local-boostrapper.yaml
 ```
