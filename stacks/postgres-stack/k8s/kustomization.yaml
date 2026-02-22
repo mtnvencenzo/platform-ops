@@ -8,3 +8,4 @@ resources:
   - postgres.yml
   - pgadmin.yml
   - ingress.yml
+  - nodeport.yml
