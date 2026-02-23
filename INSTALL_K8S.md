@@ -117,7 +117,6 @@ k3d cluster create prd-local-apps-001 \
   -p "30672:30672@loadbalancer" \
   -p "30092:30092@loadbalancer" \
   -p "30432:30432@loadbalancer" \
-  -p "30006:30006@loadbalancer" \
   -p "9000:9000@loadbalancer" \
   --volume "/mnt/k3d-data:/var/lib/rancher/k3s/storage@all" \
   --k3s-arg "max-pods=200@server:*;agent:*" \
@@ -141,9 +140,6 @@ k3d cluster create prd-local-apps-001 \
 #
 # postgres
 # k3d cluster edit prd-local-apps-001 --port-add 30432:30432@loadbalancer
-#
-# dapr scheduler
-# k3d cluster edit prd-local-apps-001 --port-add 30006:30006@loadbalancer
 #
 # traefik
 # k3d cluster edit prd-local-apps-001 --port-add 9000:9000@loadbalancer

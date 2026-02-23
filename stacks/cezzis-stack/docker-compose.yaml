@@ -366,7 +366,7 @@ services:
         --scheduler-host-address 'dapr-scheduler:50004'
         --app-channel-address cocktails-accounts
     volumes:
-      - ../cezzis-com-accounts-api/.dapr/prd:/components
+      - ../cezzis-com-accounts-api/.iac/dapr/docker-prd:/components
     networks:
       app-internal-network:
     depends_on:

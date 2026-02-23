@@ -21,6 +21,7 @@ helm upgrade --install dapr dapr/dapr \
     --namespace dapr-system \
     --create-namespace \
     --set global.ha.enabled=false \
+    --set global.mtls.enabled=false \
     --wait
     
 # verify the pods are running
@@ -31,7 +32,12 @@ kubectl get pods --namespace dapr-system
 Optionally add a node port to the scheduler so it's available outside the cluster.
 This is helpful for local development.
 
+__NOTE:__ For local app development I am using a docker compose setup on the host machine
+since the k3d dapr-system requires tls and mtls.  Apps within the cluster connect to the k3d clusters dapr system though.
+
 ``` shell
+# This only works with the dapr platform stack, not the dapr-system because the dapr system
+# requires tls and is a pain from local dev
 kubectl apply -f k8s-setup/dapr-scheduler-nodeport.yml
 ```
 
