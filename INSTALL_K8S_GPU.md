@@ -15,18 +15,73 @@ If not installed, follow the official NVIDIA instructions for your OS.
 
 ### Step 2: Install NVIDIA Container Toolkit
 
-This allows Docker to use the GPU.
+This allows Docker containers to access the GPU. Install the `nvidia-container-toolkit` package (replaces the deprecated `nvidia-docker2`).
 
 ```bash
 # Add the package repositories
-distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
-curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
-curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | \
+  sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | \
+  sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
 
 sudo apt-get update
-sudo apt-get install -y nvidia-docker2
+sudo apt-get install -y nvidia-container-toolkit
+```
+
+### Step 3: Configure Docker Default Runtime
+
+K3d creates its K3s node containers through Docker. For GPU access to propagate into the K3s nodes, Docker **must** use the nvidia runtime as its default runtime.
+
+```bash
+# Configure the nvidia runtime for Docker
+sudo nvidia-ctk runtime configure --runtime=docker --set-as-default
 sudo systemctl restart docker
 ```
+
+Verify the configuration was applied:
+
+```bash
+cat /etc/docker/daemon.json
+```
+
+You should see output similar to:
+
+```json
+{
+  "default-runtime": "nvidia",
+  "runtimes": {
+    "nvidia": {
+      "path": "nvidia-container-runtime",
+      "runtimeArgs": []
+    }
+  }
+}
+```
+
+### Step 4: Generate CDI Specs (Optional)
+
+Some environments require CDI (Container Device Interface) specs to be generated for proper device discovery.
+
+```bash
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+nvidia-ctk cdi list
+```
+
+### Step 5: Verify GPU Access at the Docker Level
+
+Before proceeding to K3d/K8s setup, confirm Docker can see the GPU:
+
+```bash
+docker run --rm --gpus all nvidia/cuda:12.0.1-base-ubuntu22.04 nvidia-smi
+```
+
+If this command does not show your GPU, stop here and troubleshoot before continuing.
+
+<br/>
+
+## Create the K3d Cluster with GPU Support
+
+> **Important:** The K3d cluster must be created with the `--gpus all` flag so that GPU devices are forwarded into the K3s node containers. See the cluster creation command in the [K3d setup guide](INSTALL_K8S.md) and ensure `--gpus all` is included.
 
 <br/>
 
@@ -51,25 +106,87 @@ helm install gpu-operator nvidia/gpu-operator \
   --set toolkit.env[0].value=/var/lib/rancher/k3s/agent/etc/containerd/config.toml \
   --set toolkit.env[1].name=CONTAINERD_SOCKET \
   --set toolkit.env[1].value=/run/k3s/containerd/containerd.sock \
-  --set driver.enabled=false \
-  --set toolkit.enabled=false
+  --set driver.enabled=false
 ```
-_Note: driver.enabled=false is used because k3d runs inside Docker, which already has access to the host's drivers._
+_Note: `driver.enabled=false` because k3d runs inside Docker, which already has access to the host's GPU drivers. The toolkit remains **enabled** (default) so that the operator configures containerd inside the K3s nodes to use the nvidia runtime — without this, scheduled pods won't be able to access GPU devices._
 
+### Step 3: Wait for the GPU Operator to be Ready
 
-### Step 3: Enable GPU sharing
+The GPU Operator deploys several daemonsets and pods that take a few minutes to roll out. Wait for them before proceeding:
+
+``` shell
+kubectl -n gpu-operator wait --for=condition=ready pod --all --timeout=300s
+```
+
+You can also monitor the rollout:
+
+``` shell
+kubectl -n gpu-operator get pods -w
+```
+
+### Step 4: Enable GPU sharing
 
 ``` shell
 kubectl apply -f k8s-setup/time-slicing-config-all.yml
 kubectl patch clusterpolicy/cluster-policy -n gpu-operator --type merge -p '{"spec": {"devicePlugin": {"config": {"name": "time-slicing-config-all", "default": "any"}}}}'
 ```
 
-### Step 4: Verify GPU Availability
+### Step 5: Verify GPU Availability
 Once the operator pods are running, verify the nodes have allocatable GPUs:
 
 ``` shell
 kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
 ```
+
+<br/>
+
+## Troubleshooting: GPU Access After Sleep/Wake
+
+If your machine goes to sleep and resumes, GPU access may be lost in the K3d cluster due to stale device handles. Here are steps to check and recover:
+
+### 1. Check GPU access at each layer
+
+```bash
+# Host GPU
+nvidia-smi
+
+# Docker GPU
+docker run --rm --gpus all nvidia/cuda:12.0.1-base-ubuntu22.04 nvidia-smi
+
+# K3d cluster and K8s nodes
+k3d cluster list
+kubectl get nodes
+
+# GPU Operator pods
+kubectl -n gpu-operator get pods
+
+# GPUs still allocatable?
+kubectl get nodes "-o=custom-columns=NAME:.metadata.name,GPU:.status.allocatable.nvidia\.com/gpu"
+```
+
+### 2. If GPU access is lost
+
+Restart the K3d cluster to refresh device handles:
+
+```bash
+k3d cluster stop <your-cluster-name>
+k3d cluster start <your-cluster-name>
+```
+
+Wait for GPU Operator pods to recover:
+
+```bash
+kubectl -n gpu-operator wait --for=condition=ready pod --all --timeout=300s
+```
+
+If that doesn't work, restart Docker and then restart the cluster:
+
+```bash
+sudo systemctl restart docker
+k3d cluster start <your-cluster-name>
+```
+
+No reinstall is needed; your configuration persists.
 
 <br/>
 
@@ -80,4 +197,17 @@ Deploy a pod that requests a GPU to ensure everything is connected:
 
 ``` shell
 kubectl apply -f k8s-setup/cuda-test.yml
+```
+
+### Step 2: Check the test pod output
+
+``` shell
+kubectl wait --for=condition=ready pod/gpu-test --timeout=120s || true
+kubectl logs gpu-test
+```
+
+You should see `nvidia-smi` output showing your GPU inside the pod. Clean up when done:
+
+``` shell
+kubectl delete pod gpu-test
 ```
