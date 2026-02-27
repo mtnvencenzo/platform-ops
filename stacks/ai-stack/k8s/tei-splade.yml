@@ -20,6 +20,7 @@ spec:
         app: tei-splade
         component: splade
     spec:
+      runtimeClassName: nvidia
       containers:
         - name: tei-splade
           image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.8
@@ -59,11 +60,9 @@ spec:
             - name: HF_HOME
               value: "/root/.cache/huggingface"
             - name: CUDA_VISIBLE_DEVICES
-              value: ""
-              # value: "all"
+              value: "all"
             - name: NVIDIA_VISIBLE_DEVICES
-              value: ""
-              # value: "all"
+              value: "all"
             - name: API_KEY
               valueFrom:
                 secretKeyRef:
@@ -77,6 +76,7 @@ spec:
               cpu: "500m"
               memory: "2Gi"
             limits:
+              nvidia.com/gpu: "1" # requesting 1 GPU
               cpu: "2"
               memory: "8Gi"
           readinessProbe:
@@ -95,7 +95,10 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 10
-      # runtimeClassName: nvidia
+      tolerations:
+        - key: nvidia.com/gpu
+          operator: Exists
+          effect: NoSchedule
       volumes:
         - name: hf-cache
           persistentVolumeClaim:
