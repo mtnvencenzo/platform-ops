@@ -4,7 +4,7 @@ https://github.com/k3d-io/k3d/issues/1108
 
 ```shell
 # use the custom image
-k3d cluster create gputest --image=ghcr.io/justinthelaw/k3d-gpu-support:v1.28.8-k3s1-rc.1 --gpus=all --api-port 6443
+k3d cluster create gputest --image=gputest/k3d-gpu-support:1.0.1 --gpus=all --api-port 6443
 ```
 
 ### test

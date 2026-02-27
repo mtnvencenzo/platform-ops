@@ -129,10 +129,11 @@ k3d cluster create prd-local-apps-001 \
   --agents-memory 12G \
   --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*" \
   --gpus all \
-  --volume /usr/bin/nvidia-smi:/usr/bin/nvidia-smi@all \
-  --volume /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu@all \
+  --image acrveceusgloshared001.azurecr.io/cezzis/k3s:v1.31.5-k3s1.12.2.2-cuda12.2.2-base-ubuntu22.04 \
   --k3s-arg "--disable=metrics-server@server:0" \
-  --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*"  
+  --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*" \
+  # --volume /usr/bin/nvidia-smi:/usr/bin/nvidia-smi@all \
+  # --volume /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu@all \
 
 
 
