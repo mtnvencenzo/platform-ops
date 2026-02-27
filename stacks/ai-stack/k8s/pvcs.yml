@@ -16,7 +16,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: hf-cache
+  name: hf-cache-tei
   namespace: ai-platform
   labels:
     app.kubernetes.io/part-of: ai-platform
@@ -26,7 +26,38 @@ spec:
   storageClassName: local-path
   resources:
     requests:
-      storage: 20Gi
+      storage: 12Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hf-cache-tei-reranker
+  namespace: ai-platform
+  labels:
+    app.kubernetes.io/part-of: ai-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 12Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: hf-cache-tei-splade
+  namespace: ai-platform
+  labels:
+    app.kubernetes.io/part-of: ai-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 12Gi
+    
 #---
 # apiVersion: v1
 # kind: PersistentVolumeClaim

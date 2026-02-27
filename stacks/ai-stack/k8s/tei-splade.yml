@@ -102,7 +102,7 @@ spec:
       volumes:
         - name: hf-cache
           persistentVolumeClaim:
-            claimName: hf-cache
+            claimName: hf-cache-tei-splade
 ---
 apiVersion: v1
 kind: Service

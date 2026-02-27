@@ -100,7 +100,7 @@ spec:
       volumes:
         - name: hf-cache
           persistentVolumeClaim:
-            claimName: hf-cache
+            claimName: hf-cache-tei-reranker
 ---
 apiVersion: v1
 kind: Service
