@@ -53,6 +53,16 @@ kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs
 
 ```
 
+## Troubleshooting
+
+### Clearing a stuck argocd application from deleting
+This is typically due to stuck finalizers.
+
+``` shell
+kubectl patch application/<appname> --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]' -n argocd
+```
+
+
 ## Commands to install cezzis.com stacks via argo cd with the image updater
 
 Create the namespace and add the image updater secret

@@ -115,12 +115,12 @@ sudo mkdir -p /mnt/k3d-data
 sudo chmod -R 777 /mnt/k3d-data
 
 k3d cluster create prd-local-apps-001 \
-  -p "8080:80@loadbalancer" \
-  -p "8443:443@loadbalancer" \
+  -p "80:80@loadbalancer" \
+  -p "443:443@loadbalancer" \
+  -p "9000:9000@loadbalancer" \
   -p "30672:30672@loadbalancer" \
   -p "30092:30092@loadbalancer" \
   -p "30432:30432@loadbalancer" \
-  -p "9000:9000@loadbalancer" \
   --volume "/mnt/k3d-data:/var/lib/rancher/k3s/storage@all" \
   --k3s-arg "max-pods=200@server:*;agent:*" \
   --api-port 6443 \
@@ -149,7 +149,7 @@ k3d cluster create prd-local-apps-001 \
 # postgres
 # k3d cluster edit prd-local-apps-001 --port-add 30432:30432@loadbalancer
 #
-# traefik
+# portainer
 # k3d cluster edit prd-local-apps-001 --port-add 9000:9000@loadbalancer
 ```
 
@@ -166,8 +166,10 @@ GPU support with NVIDIA drivers is now part of the cusom k3s image used when cre
 ## ~~[Experimental / Optional] Enable GPU in Cluster~~
 ~~[Gpu setup steps](INSTALL_K8S_GPU.md)~~
 
-## Install Rancher
-[Rancher install steps](INSTALL_K8S_RANCHER.md)
+## Install a Cluster Manager (Portainer Recommended)
+Rancher is a resource hog and crashes a lot in a home lab setup.  I suggest portainer as a simpler and more efficent cluter manager.  
+
+[Portainer install steps](INSTALL_K8S_PORTAINER.md)  _OR_  [Rancher install steps](INSTALL_K8S_RANCHER.md)
 
 ## Install ArgoCD
 [ArgoCD install steps](INSTALL_K8S_ARGOCD.md)
@@ -178,9 +180,3 @@ GPU support with NVIDIA drivers is now part of the cusom k3s image used when cre
 ## Install Various Stacks and Applications
 [Stack install steps](INSTALL_STACKS.md)
 
-
-
-## [Optional] Traefik Dashboard
-``` shell
-kubectl apply -f k8s-setup/traefik-dashboard.yml
-```
