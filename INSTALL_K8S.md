@@ -129,7 +129,7 @@ k3d cluster create prd-local-apps-001 \
   --agents-memory 12G \
   --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*" \
   --gpus all \
-  --image acrveceusgloshared001.azurecr.io/cezzis/k3s:v1.31.5-k3s1.12.2.2-cuda12.2.2-base-ubuntu22.04 \
+  --image acrveceusgloshared001.azurecr.io/cezzis/k3s:v1.31.5-k3s1.12.2.2-cuda12.2.2-base-ubuntu22.04-v1 \
   --k3s-arg "--disable=metrics-server@server:0" \
   --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*" \
   # --volume /usr/bin/nvidia-smi:/usr/bin/nvidia-smi@all \
@@ -162,8 +162,9 @@ k3d cluster list
 
 <br/> 
 
-## [Experimental / Optional] Enable GPU in Cluster
-[Gpu setup steps](INSTALL_K8S_GPU.md)
+GPU support with NVIDIA drivers is now part of the cusom k3s image used when creating the k3d cluster.  See the [GPU readme](./k3d-agent-gpu/README.md) for informatino on running the kustom k3s image and building new custom images.
+## ~~[Experimental / Optional] Enable GPU in Cluster~~
+~~[Gpu setup steps](INSTALL_K8S_GPU.md)~~
 
 ## Install Rancher
 [Rancher install steps](INSTALL_K8S_RANCHER.md)

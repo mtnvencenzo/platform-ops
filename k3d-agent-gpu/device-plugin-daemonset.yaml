@@ -31,7 +31,7 @@ spec:
       # See https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/
       priorityClassName: "system-node-critical"
       containers:
-      - image: nvcr.io/nvidia/k8s-device-plugin:v0.15.0-rc.2
+      - image: nvcr.io/nvidia/k8s-device-plugin:v0.16.2-ubuntu22.04
         name: nvidia-device-plugin-ctr
         env:
           - name: PASS_DEVICE_SPECS
@@ -48,6 +48,8 @@ spec:
             value: all
           - name: MPS_ROOT
             value: /run/nvidia/mps
+          - name: NVIDIA_DEVICE_PLUGIN_CONFIG
+            value: /etc/nvidia-device-plugin/time-slicing-config-all.yaml
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -55,7 +57,12 @@ spec:
         volumeMounts:
         - name: device-plugin
           mountPath: /var/lib/kubelet/device-plugins
+        - name: time-slicing-config
+          mountPath: /etc/nvidia-device-plugin/
       volumes:
       - name: device-plugin
         hostPath:
           path: /var/lib/kubelet/device-plugins
+      - name: time-slicing-config
+        configMap:
+          name: time-slicing-config-all

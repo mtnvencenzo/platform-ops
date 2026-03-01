@@ -94,12 +94,6 @@ data:
       credentials: pullsecret:argocd/acr-pull-secret
 ```
 
-### Restart the image updater
-The Image Updater doesn't always hot-reload registries.conf changes. Restart the pod to be safe:
-```
-kubectl rollout restart deployment argocd-image-updater-controller -n argocd
-```
-
 ### Use the git writeback method
 
 #### Step 1: Create a github app
@@ -120,6 +114,13 @@ kubectl -n argocd create secret generic git-creds \
   --from-literal=githubAppID=2918282 \
   --from-literal=githubAppInstallationID=111603325 \
   --from-file=githubAppPrivateKey=mtnvencenzo-argocd-writeback-app.private-key.pem
+```
+
+#### Restart the image updater
+The Image Updater doesn't always hot-reload registries.conf changes. Restart the pod to be safe:
+
+``` shell
+kubectl rollout restart deployment argocd-image-updater-controller -n argocd
 ```
 
 #### Step 3: Update each repositories bypass list to include the app __mtnvencenzo-argocd-writeback-app__

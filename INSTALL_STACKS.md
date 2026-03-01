@@ -1,8 +1,6 @@
 ## Integrate namespaces with azure container registry if they pull images from there
 Run this command for every namespace where you plan to deploy images from ACR (including the cezzis namespace from your example):
 ```
-kubectl create namespace cezzis
-
 kubectl create secret docker-registry acr-pull-secret \
   --docker-server=acrveceusgloshared001.azurecr.io \
   --docker-username=acrveceusgloshared001 \
@@ -56,6 +54,17 @@ kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs
 ```
 
 ## Commands to install cezzis.com stacks via argo cd with the image updater
+
+Create the namespace and add the image updater secret
+``` shell
+kubectl create namespace cezzis
+
+kubectl create secret docker-registry acr-pull-secret \
+  --docker-server=acrveceusgloshared001.azurecr.io \
+  --docker-username=acrveceusgloshared001 \
+  --docker-password=<ACR-Admin-Password> \
+  -n cezzis
+```
 
 ``` shell
 # cezzis.com bootstrapper

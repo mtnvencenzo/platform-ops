@@ -3,7 +3,7 @@ DOCKERFILE := dockerfile
 PLATFORM := linux/amd64
 ORGANIZATION := cezzis
 IMAGE_NAME := k3s
-TAG := v1.31.5-k3s1.12.2.2-cuda12.2.2-base-ubuntu22.04
+TAG := v1.31.5-k3s1.12.2.2-cuda12.2.2-base-ubuntu22.04-v1
 
 # Default target
 all: build-k3d push-k3d

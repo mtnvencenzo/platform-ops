@@ -74,15 +74,7 @@ _The installation may take a few minutes. You can check the status by watching t
 kubectl get pods -n cattle-system --watch
 ```
 
-## Step 6: Patch rancher to use the cluster wide certificate issuer
-
-``` shell
-# shouldn't be needed anymore due to the helm install command and extra annotations
-# kubectl patch certificate tls-rancher-ingress -n cattle-system \
-# --type='json' -p='[{"op": "replace", "path": "/spec/issuerRef", "value": {"group": "cert-manager.io", "kind": "ClusterIssuer", "name": "selfsigned-cluster-issuer"}}]'
-```
-
-## Step 7: Login to Rancher
+## Step 6: Login to Rancher
 
 https://localhost:8443
 __User:__ admin
