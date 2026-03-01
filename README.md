@@ -11,6 +11,7 @@ A collection of Docker Compose stacks for local development environments. Each s
 | [dapr-stack](./stacks/dapr-stack/README.md) | Dapr self-hosted runtime with placement and scheduler services for distributed application development |
 | [elastic-stack](./stacks/elastic-stack/README.md) | Elastic Stack with Elasticsearch, Elastic APM, Kibana, and OpenTelemetry Collector for observability |
 | [kafka-stack](./stacks/kafka-stack/README.md) | Apache Kafka environment supporting KRaft and Zookeeper modes with Schema Registry and Kafka UI |
+| [openobserve-stack](./stacks/openobserve-stack/README.md) | Openobserve with otel collectory for observability |
 | [postgres-stack](./stacks/postgres-stack/README.md) | PostgreSQL 16 database with pgAdmin web UI for database management |
 | [rabbitmq-stack](./stacks/rabbitmq-stack/README.md) | RabbitMQ message broker with management UI and SSL/TLS support |
 | [redis-stack](./stacks/redis-stack/README.md) | Redis server with AOF persistence and RedisInsight web UI |
@@ -18,10 +19,11 @@ A collection of Docker Compose stacks for local development environments. Each s
 
 ## Getting Started
 
-Choose your setup path based on your needs:
+Setup your host machine with docker and a K3d cluster
+**Kubernetes (k3d)**  
+Follow the [Kubernetes Installation Guide](./INSTALL.md) which includes Docker installation along with k3d, Portainer (or Rancher), and ArgoCD setup.
 
-- **Docker Compose only** - If you just want to run the stacks using Docker Compose, follow the [Docker Setup Guide](./docker-setup/README.md) to install and configure Docker.
-- **Kubernetes (k3d)** - If you plan to run a local Kubernetes cluster, follow the [Kubernetes Installation Guide](./INSTALL_K8S.md) which includes Docker installation along with k3d, Rancher, and ArgoCD setup.
+> If you just want to run the stacks using Docker Compose, follow the [Docker Setup Guide](./docker-setup/README.md) to install and configure Docker.
 
 ## Prerequisites
 

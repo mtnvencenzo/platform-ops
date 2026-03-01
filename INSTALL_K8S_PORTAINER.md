@@ -1,4 +1,5 @@
-
+# Install Portainer
+[<< back](INSTALL.md)
 
 ## Install Portainer into the Cluster
 To expose via Load Balancer, use the following command to provision Portainer at an assigned Load Balancer IP on port 9000 for HTTP and 9443 for HTTPS:

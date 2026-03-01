@@ -1,4 +1,5 @@
 # Install Rancher
+[<< back](INSTALL.md)
 
 Rancher requires cert-manager to issue its own TLS certificate
 

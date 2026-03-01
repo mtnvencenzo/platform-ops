@@ -1,4 +1,6 @@
 # Install Argo CD
+[<< back](INSTALL.md)
+
 To install Argo CD into your k3d cluster alongside Rancher, the most efficient method is using its official Helm chart.
 
 ## Step 1: Add the Argo helm repo

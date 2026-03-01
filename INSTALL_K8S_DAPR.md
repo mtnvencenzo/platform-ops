@@ -1,4 +1,6 @@
 # Installing DAPR into a K8s Cluster
+[<< back](INSTALL.md)
+
 https://docs.dapr.io/operations/hosting/kubernetes/kubernetes-deploy/
 
 ## Installing with Helm

@@ -1,3 +1,6 @@
+# Install Platform Stacks
+[<< back](INSTALL.md)
+
 ## Integrate namespaces with azure container registry if they pull images from there
 Run this command for every namespace where you plan to deploy images from ACR (including the cezzis namespace from your example):
 ```
