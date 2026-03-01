@@ -16,6 +16,10 @@ spec:
       labels:
         app: otel-collector
     spec:
+      initContainers:
+        - name: wait-for-openobserve
+          image: curlimages/curl:latest
+          command: ['sh', '-c', 'until curl -sf http://openobserve:5080/health; do echo waiting for openobserve; sleep 5; done']
       containers:
         - name: otel-collector
           image: otel/opentelemetry-collector-contrib:0.134.1
