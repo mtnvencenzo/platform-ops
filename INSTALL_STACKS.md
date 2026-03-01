@@ -7,7 +7,7 @@ Run this command for every namespace where you plan to deploy images from ACR (i
 kubectl create secret docker-registry acr-pull-secret \
   --docker-server=acrveceusgloshared001.azurecr.io \
   --docker-username=acrveceusgloshared001 \
-  --docker-password=<ACR-Admin-Password> \
+  --docker-password=$ACR_ACCESS_KEY \
   -n cezzis
 ```
 Then, update your Job/App manifest to include imagePullSecrets so the cluster knows which key to use:
@@ -75,7 +75,7 @@ kubectl create namespace cezzis
 kubectl create secret docker-registry acr-pull-secret \
   --docker-server=acrveceusgloshared001.azurecr.io \
   --docker-username=acrveceusgloshared001 \
-  --docker-password=<ACR-Admin-Password> \
+  --docker-password=$ACR_ACCESS_KEY \
   -n cezzis
 ```
 

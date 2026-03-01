@@ -72,7 +72,7 @@ The Image Updater needs its own access to the registry's API to check for new ta
 kubectl create secret docker-registry acr-pull-secret \
   --docker-server=acrveceusgloshared001.azurecr.io \
   --docker-username=acrveceusgloshared001 \
-  --docker-password=<ACR-Admin-Password> \
+  --docker-password=$ACR_ACCESS_KEY \
   -n argocd
 ```
 
