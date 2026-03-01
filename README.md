@@ -2,6 +2,8 @@
 
 A collection of Docker Compose stacks for local development environments. Each stack provides containerized infrastructure services commonly needed for application development and testing.
 
+> See below fo detailed install steps for running a K3D cluster with Portainer (or Rancher) and ArgoCD.
+
 ## Stacks
 
 | Stack | Description |
