@@ -2,13 +2,13 @@
 [<< back](INSTALL.md)
 
 ## Integrate namespaces with azure container registry if they pull images from there
-Run this command for every namespace where you plan to deploy images from ACR (including the cezzis namespace from your example):
+Run this command for every namespace where you plan to deploy images from ACR:
 ```
 kubectl create secret docker-registry acr-pull-secret \
   --docker-server=acrveceusgloshared001.azurecr.io \
   --docker-username=acrveceusgloshared001 \
   --docker-password=$ACR_ACCESS_KEY \
-  -n cezzis
+  -n <namespace>
 ```
 Then, update your Job/App manifest to include imagePullSecrets so the cluster knows which key to use:
 
@@ -19,8 +19,8 @@ spec:
       imagePullSecrets:
         - name: acr-pull-secret
       containers:
-        - name: cezzis-com-local-bootstrapper
-          image: acrveceusgloshared001.azurecr.io/cezziscombootstrapper:latest
+        - name: <app-name>
+          image: acrveceusgloshared001.azurecr.io/<image>:latest
 ```
 
 
@@ -63,25 +63,4 @@ This is typically due to stuck finalizers.
 
 ``` shell
 kubectl patch application/<appname> --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]' -n argocd
-```
-
-
-## Commands to install cezzis.com stacks via argo cd with the image updater
-
-Create the namespace and add the image updater secret
-``` shell
-kubectl create namespace cezzis
-
-kubectl create secret docker-registry acr-pull-secret \
-  --docker-server=acrveceusgloshared001.azurecr.io \
-  --docker-username=acrveceusgloshared001 \
-  --docker-password=$ACR_ACCESS_KEY \
-  -n cezzis
-```
-
-``` shell
-# cezzis.com bootstrapper
-kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/cezzis-com-local-bootstrapper/refs/heads/main/.iac/argocd/cezzis-com-local-boostrapper.yaml
-
-kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/cezzis-com-local-bootstrapper/refs/heads/main/.iac/argocd/image-updater.yaml
 ```
