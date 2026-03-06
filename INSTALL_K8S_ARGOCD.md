@@ -58,6 +58,23 @@ _Note: if using an non standard (80) port number like 8080 for the cluster then 
 
 <br />
 
+## Add Helm External Secret Support
+In order to use external secret stores (like azure keyvault) you need to install the helm chart.
+
+``` shell
+# Add the helm repo
+helm repo add external-secrets https://charts.external-secrets.io
+helm repo update
+
+# Install the chart
+helm install external-secrets external-secrets/external-secrets \
+  -n external-secrets \
+  --create-namespace
+
+```
+
+<br />
+
 ## Argo CD Image Updater
 Add the argo cd image updater to the cluster and within the argocd namespace
 
