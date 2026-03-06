@@ -3,14 +3,24 @@
 
 To install Argo CD into your k3d cluster alongside Rancher, the most efficient method is using its official Helm chart.
 
-## Step 1: Add the Argo helm repo
+## [Optional] Install the ArgoCD Cli
+
+``` shell
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+```
+
+## Install ArgoCd into the Cluster
+
+### Step 1: Add the Argo helm repo
 
 ``` shell
 helm repo add argo https://argoproj.github.io/argo-helm
 helm repo update
 ```
 
-## Step 2: Install Argo CD
+### Step 2: Install Argo CD
 Create a dedicated namespace and install the chart. Since this is a local k3d environment, you can use the non-HA (High Availability) version to save resources
 
 ``` shell
@@ -22,7 +32,7 @@ helm install argocd argo/argo-cd \
 kubectl get pods -n argocd
 ```
 
-## Step 3: Create an ingress in Rancher
+### Step 3: Create an ingress in Rancher
 Since you have Rancher and likely a k3d load balancer running, you can create an Ingress in the Rancher UI to avoid port-forwarding
 
 When you create the Ingress in the Rancher UI, use the values confirmed from the command above: 
@@ -37,19 +47,19 @@ __Port:__ 80 (Choosing 80 avoids SSL mismatch issues during the initial setup)
 _Note: Before looking for the Target Service, ensure the Namespace dropdown at the top of the "Create Ingress" screen is set specifically to argocd. If it is set to "All Namespaces" or "Default," the argocd-server won't appear in the list.  Also, argocd should be added to the default project in Rancher_
 
 
-## Step 4: Allow insecure connections to Argo CD
+### Step 4: Allow insecure connections to Argo CD
 ``` shell
 kubectl patch cm argocd-cmd-params-cm -n argocd -p '{"data": {"server.insecure": "true"}}'
 kubectl rollout restart deployment argocd-server -n argocd
 ```
 
-## Step 5: Retreive the auto-generated admin password
+### Step 5: Retreive the auto-generated admin password
 
 ``` shell
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
 
-## Step 6: Browse to Argo CD and Login
+### Step 6: Browse to Argo CD and Login
 
 http://argocd.127.0.0.1.sslip.io:8080
 Username: admin
