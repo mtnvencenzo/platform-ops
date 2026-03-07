@@ -64,3 +64,10 @@ This is typically due to stuck finalizers.
 ``` shell
 kubectl patch application/<appname> --type json --patch='[ { "op": "remove", "path": "/metadata/finalizers" } ]' -n argocd
 ```
+
+
+### Deleting pods in certain statuses
+
+``` shell
+kubectl get pods -n ai-platform --no-headers | awk '$3=="UnexpectedAdmissionError" {print $1}' | xargs -r kubectl delete pod -n ai-platform
+```
