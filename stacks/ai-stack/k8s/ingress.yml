@@ -10,7 +10,7 @@ metadata:
     kubernetes.io/ingress.class: traefik
 spec:
   rules:
-    # Qdrant – accessible at http://qdrant.127.0.0.1.sslip.io:8080
+    # Qdrant – accessible at http://qdrant.127.0.0.1.sslip.io
     - host: qdrant.127.0.0.1.sslip.io
       http:
         paths:
@@ -21,7 +21,7 @@ spec:
                 name: qdrant
                 port:
                   number: 6333
-    # TEI – accessible at http://tei.127.0.0.1.sslip.io:8080
+    # TEI – accessible at http://tei.127.0.0.1.sslip.io
     - host: tei.127.0.0.1.sslip.io
       http:
         paths:
@@ -32,7 +32,7 @@ spec:
                 name: tei
                 port:
                   number: 8989
-    # TEI Reranker – accessible at http://tei-reranker.127.0.0.1.sslip.io:8080
+    # TEI Reranker – accessible at http://tei-reranker.127.0.0.1.sslip.io
     - host: tei-reranker.127.0.0.1.sslip.io
       http:
         paths:
@@ -43,7 +43,7 @@ spec:
                 name: tei-reranker
                 port:
                   number: 8990
-    # TEI Splade – accessible at http://tei-splade.127.0.0.1.sslip.io:8080
+    # TEI Splade – accessible at http://tei-splade.127.0.0.1.sslip.io
     - host: tei-splade.127.0.0.1.sslip.io
       http:
         paths:
