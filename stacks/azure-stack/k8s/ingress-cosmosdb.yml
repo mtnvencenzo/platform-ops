@@ -1,0 +1,41 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: azure-platform-cosmosdb-ingress
+  namespace: azure-platform
+spec:
+  entryPoints:
+    - websecure
+  
+  # Cosmos DB – accessible at http://cosmosdb.127.0.0.1.sslip.io
+  routes:
+    - match: HostSNI(`cosmosdb.127.0.0.1.sslip.io`)
+      services:
+        - name: cosmosdb
+          port: 8081
+  tls:
+    passthrough: true
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: azure-platform-cosmosdb-explorer-ingress
+  namespace: azure-platform
+  labels:
+    app.kubernetes.io/part-of: azure-platform
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+    # Cosmos DB Explorer – accessible at http://cosmosdb-exp.127.0.0.1.sslip.io
+    - host: cosmosdb-exp.127.0.0.1.sslip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cosmosdb
+                port:
+                  number: 1234
+
