@@ -28,7 +28,7 @@ spec:
               name: management
           env:
             - name: RABBITMQ_NODENAME
-              value: "rabbit@rabbitmq"
+              value: "rabbit@localhost"
             - name: RABBITMQ_DEFAULT_USER
               valueFrom:
                 secretKeyRef:
