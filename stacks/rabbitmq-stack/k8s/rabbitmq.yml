@@ -27,6 +27,8 @@ spec:
             - containerPort: 15672
               name: management
           env:
+            - name: RABBITMQ_NODENAME
+              value: "rabbit@rabbitmq"
             - name: RABBITMQ_DEFAULT_USER
               valueFrom:
                 secretKeyRef:
