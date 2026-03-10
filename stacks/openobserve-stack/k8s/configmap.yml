@@ -28,7 +28,8 @@ data:
                 "https://localhost:4001",
                 "http://localhost:4001",
                 "https://localhost:4002",
-                "http://localhost:4002"
+                "http://localhost:4002",
+                "http://cezzis-prd.127.0.0.1.sslip.io"
               ]
               allowed_headers: ["*"]
               max_age: 600
