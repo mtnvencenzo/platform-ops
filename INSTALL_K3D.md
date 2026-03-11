@@ -54,9 +54,6 @@ k3d cluster create prd-local-apps-001 \
   --k3s-arg "--disable=metrics-server@server:0" \
   --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*"
 
-# Add the persisten volume and claim for the pod app data mount
-kubectl apply -f ./k8s-setup/shared-pod-data.yml
-
 # add more ports to the lb (adding node ports is not enough, need to tell the cluster lb to map the ports as well)
 # The additional cluter lb port mappings are already added to the cluster create command above
 #
