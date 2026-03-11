@@ -32,26 +32,14 @@ helm install argocd argo/argo-cd \
 kubectl get pods -n argocd
 ```
 
-### Step 3: Create an ingress in Rancher
-Since you have Rancher and likely a k3d load balancer running, you can create an Ingress in the Rancher UI to avoid port-forwarding
-
-When you create the Ingress in the Rancher UI, use the values confirmed from the command above: 
-
-__Namespace:__ argocd  
-__Name:__ argocd-ingress  
-__Hostname:__ argocd.127.0.0.1.sslip.io (This resolves to your local machine)  
-__Path (prefix):__ /  
-__Target Service:__ argocd-server  
-__Port:__ 80 (Choosing 80 avoids SSL mismatch issues during the initial setup) 
-
-_Note: Before looking for the Target Service, ensure the Namespace dropdown at the top of the "Create Ingress" screen is set specifically to argocd. If it is set to "All Namespaces" or "Default," the argocd-server won't appear in the list.  Also, argocd should be added to the default project in Rancher_
-
-
-### Step 4: Allow insecure connections to Argo CD
+### Step 3: Allow insecure connections to Argo CD
 ``` shell
 kubectl patch cm argocd-cmd-params-cm -n argocd -p '{"data": {"server.insecure": "true"}}'
 kubectl rollout restart deployment argocd-server -n argocd
 ```
+
+### Step 4: Create the ingress for the UI
+kubectl apply -f ./k8s-setup/argocd-ingress.yml
 
 ### Step 5: Retreive the auto-generated admin password
 
@@ -61,7 +49,7 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 
 ### Step 6: Browse to Argo CD and Login
 
-http://argocd.127.0.0.1.sslip.io:8080
+http://argocd.127.0.0.1.sslip.io
 Username: admin
 
 _Note: if using an non standard (80) port number like 8080 for the cluster then that port would need to be used on the ingress urls when access them_

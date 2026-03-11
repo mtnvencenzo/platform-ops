@@ -47,3 +47,7 @@ Rancher is a resource hog and crashes a lot in a home lab setup.  I suggest port
 ## Install Various Stacks and Applications
 [Stack install steps](INSTALL_STACKS.md)
 
+
+## Complete Cluster Teardown & Cleanup
+[Uninstall / cleanup steps](UNINSTALL.md)
+
