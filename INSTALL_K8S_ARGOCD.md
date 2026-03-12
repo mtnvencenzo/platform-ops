@@ -38,16 +38,47 @@ kubectl patch cm argocd-cmd-params-cm -n argocd -p '{"data": {"server.insecure":
 kubectl rollout restart deployment argocd-server -n argocd
 ```
 
-### Step 4: Create the ingress for the UI
+### Step 4: Allow ArgoCD to manage EndpointSlice resources
+By default ArgoCD excludes `Endpoints` and `EndpointSlice` resources. Since we use manually-defined EndpointSlice resources (e.g. `ollama-host-service` for routing to host services), we need to remove `EndpointSlice` from the exclusion list.
+
+``` shell
+KUBE_EDITOR=nano kubectl edit configmap argocd-cm -n argocd
+```
+
+In the editor, find the first exclusion block under `resource.exclusions` and remove the `- discovery.k8s.io` and `- EndpointSlice` lines:
+
+``` yaml
+# Before:
+- apiGroups:
+  - ''
+  - discovery.k8s.io    # <-- remove this line
+  kinds:
+  - Endpoints
+  - EndpointSlice        # <-- remove this line
+
+# After:
+- apiGroups:
+  - ''
+  kinds:
+  - Endpoints
+```
+
+Then restart the server:
+
+``` shell
+kubectl rollout restart deployment argocd-server -n argocd
+```
+
+### Step 5: Create the ingress for the UI
 kubectl apply -f ./k8s-setup/argocd-ingress.yml
 
-### Step 5: Retreive the auto-generated admin password
+### Step 6: Retreive the auto-generated admin password
 
 ``` shell
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d; echo
 ```
 
-### Step 6: Browse to Argo CD and Login
+### Step 7: Browse to Argo CD and Login
 
 http://argocd.127.0.0.1.sslip.io
 Username: admin
