@@ -9,6 +9,7 @@ resources:
   - tei.yml
   - tei-reranker.yml
   - tei-splade.yml
+  - ollama-host-service.yml
   - ingress.yml
   # - ollama.yml
   # - open-webui.yml

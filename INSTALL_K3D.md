@@ -33,6 +33,10 @@ sudo rm -rf /opt/k3d-app-data
 sudo mkdir -p /opt/k3d-app-data
 sudo chmod -R 777 /opt/k3d-app-data
 
+# Pre-create the k3d network with a fixed subnet so the gateway IP (172.18.0.1) is deterministic.
+# This ensures k8s Endpoints resources that reference the host (e.g. ollama-host-service) remain stable across cluster rebuilds.
+docker network create k3d-prd-local-apps-001 --subnet=172.18.0.0/16 --gateway=172.18.0.1 || true
+
 # Create the cluster
 k3d cluster create prd-local-apps-001 \
   -p "80:80@loadbalancer" \
