@@ -13,18 +13,20 @@ spec:
       targetPort: 11434
       protocol: TCP
 ---
-apiVersion: v1
-kind: Endpoints
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
 metadata:
-  name: ollama-host
+  name: ollama-host-static
   namespace: ai-platform
   labels:
+    kubernetes.io/service-name: ollama-host
     app.kubernetes.io/part-of: ai-platform
     app.kubernetes.io/managed-by: argocd
-subsets:
+addressType: IPv4
+ports:
+  - name: http
+    port: 11434
+    protocol: TCP
+endpoints:
   - addresses:
-      - ip: 172.18.0.1
-    ports:
-      - name: http
-        port: 11434
-        protocol: TCP
+      - 172.18.0.1
