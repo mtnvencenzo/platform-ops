@@ -7,6 +7,7 @@ metadata:
     app.kubernetes.io/part-of: redis-platform
   annotations:
     kubernetes.io/ingress.class: traefik
+    argocd.argoproj.io/sync-wave: "50"
 spec:
   rules:
     # Redis Insight – accessible at http://redis-insight.127.0.0.1.sslip.io:8080

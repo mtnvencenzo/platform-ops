@@ -6,6 +6,8 @@ metadata:
   labels:
     app: openobserve
     app.kubernetes.io/part-of: openobserve-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
 spec:
   replicas: 1
   selector:
@@ -47,6 +49,8 @@ metadata:
   labels:
     app: openobserve
     app.kubernetes.io/part-of: openobserve-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: ClusterIP
   selector:

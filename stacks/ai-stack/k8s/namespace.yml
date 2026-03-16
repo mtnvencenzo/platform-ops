@@ -4,3 +4,5 @@ metadata:
   name: ai-platform
   labels:
     app.kubernetes.io/part-of: ai-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"

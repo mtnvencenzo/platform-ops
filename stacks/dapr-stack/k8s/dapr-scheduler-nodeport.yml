@@ -3,6 +3,8 @@ kind: Service
 metadata:
   name: dapr-scheduler-nodeport
   namespace: dapr-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: NodePort
   selector:

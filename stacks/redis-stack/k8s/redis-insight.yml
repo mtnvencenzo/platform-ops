@@ -6,6 +6,8 @@ metadata:
   labels:
     app: redis-insight
     app.kubernetes.io/part-of: redis-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "45"
 spec:
   replicas: 1
   selector:
@@ -54,6 +56,8 @@ metadata:
   labels:
     app: redis-insight
     app.kubernetes.io/part-of: redis-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: ClusterIP
   selector:

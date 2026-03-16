@@ -5,6 +5,8 @@ metadata:
   namespace: azure-platform
   labels:
     app.kubernetes.io/part-of: azure-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   # CosmosDB
   PROTOCOL: "https"
@@ -30,6 +32,8 @@ metadata:
   namespace: azure-platform
   labels:
     app.kubernetes.io/part-of: azure-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 type: Opaque
 stringData:
   # Azurite default storage connection string

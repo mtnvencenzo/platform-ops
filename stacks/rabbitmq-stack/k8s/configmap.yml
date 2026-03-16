@@ -5,6 +5,8 @@ metadata:
   namespace: rabbitmq-platform
   labels:
     app.kubernetes.io/part-of: rabbitmq-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 type: Opaque
 stringData:
   RABBITMQ_DEFAULT_USER: "admin"
@@ -17,6 +19,8 @@ metadata:
   namespace: rabbitmq-platform
   labels:
     app.kubernetes.io/part-of: rabbitmq-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   rabbitmq.conf: |
     # Disable non-SSL listener

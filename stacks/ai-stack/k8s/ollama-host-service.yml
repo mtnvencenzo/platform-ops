@@ -6,6 +6,8 @@ metadata:
   labels:
     app.kubernetes.io/part-of: ai-platform
     app.kubernetes.io/managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   ports:
     - name: http
@@ -22,6 +24,8 @@ metadata:
     kubernetes.io/service-name: ollama-host
     app.kubernetes.io/part-of: ai-platform
     app.kubernetes.io/managed-by: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 addressType: IPv4
 ports:
   - name: http

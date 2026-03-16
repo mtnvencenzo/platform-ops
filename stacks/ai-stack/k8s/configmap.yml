@@ -5,6 +5,8 @@ metadata:
   namespace: ai-platform
   labels:
     app.kubernetes.io/part-of: ai-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   # Ollama
   OLLAMA_HOST: "0.0.0.0"
@@ -40,6 +42,7 @@ metadata:
   namespace: ai-platform
   labels:
     app.kubernetes.io/part-of: ai-platform
+    argocd.argoproj.io/sync-wave: "10"
 type: Opaque
 stringData:
   # Hugging Face token – replace with your actual token

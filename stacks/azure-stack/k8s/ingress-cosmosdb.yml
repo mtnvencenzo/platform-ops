@@ -3,6 +3,8 @@ kind: IngressRouteTCP
 metadata:
   name: azure-platform-cosmosdb-ingress
   namespace: azure-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "50"
 spec:
   entryPoints:
     - websecure
@@ -25,6 +27,7 @@ metadata:
     app.kubernetes.io/part-of: azure-platform
   annotations:
     kubernetes.io/ingress.class: traefik
+    argocd.argoproj.io/sync-wave: "50"
 spec:
   rules:
     # Cosmos DB Explorer – accessible at http://cosmosdb-exp.127.0.0.1.sslip.io

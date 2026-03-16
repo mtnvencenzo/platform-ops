@@ -5,6 +5,8 @@ metadata:
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
 spec:
   accessModes:
     - ReadWriteOnce
@@ -20,6 +22,8 @@ metadata:
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
 spec:
   accessModes:
     - ReadWriteOnce
@@ -35,6 +39,8 @@ metadata:
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
 spec:
   accessModes:
     - ReadWriteOnce

@@ -4,3 +4,5 @@ metadata:
   name: redis-platform
   labels:
     app.kubernetes.io/part-of: redis-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"

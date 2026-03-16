@@ -5,6 +5,8 @@ metadata:
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   # Shared Kafka Broker config
   KAFKA_PROCESS_ROLES: "broker,controller"
@@ -47,6 +49,8 @@ metadata:
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   kafka-kraft-start.sh: |
     #!/bin/bash

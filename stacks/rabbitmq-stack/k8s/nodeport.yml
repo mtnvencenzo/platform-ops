@@ -5,6 +5,8 @@ metadata:
   namespace: rabbitmq-platform
   labels:
     app.kubernetes.io/part-of: rabbitmq-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: NodePort
   selector:

@@ -4,3 +4,5 @@ metadata:
   name: elastic-platform
   labels:
     app.kubernetes.io/part-of: elastic-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"

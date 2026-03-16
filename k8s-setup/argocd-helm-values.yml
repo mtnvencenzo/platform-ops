@@ -1,0 +1,8 @@
+configs:
+  rbac:
+    policy.default: "role:readonly"
+    policy.matchMode: glob
+    scopes: "[groups]"
+    policy.csv: |
+      p, role:readonly, logs, get, */*, allow
+      p, role:admin, logs, get, */*, allow

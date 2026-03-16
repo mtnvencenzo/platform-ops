@@ -5,6 +5,8 @@ metadata:
   namespace: elastic-platform
   labels:
     app.kubernetes.io/part-of: elastic-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   # Elasticsearch
   ES_DISCOVERY_TYPE: "single-node"
@@ -24,6 +26,8 @@ metadata:
   namespace: elastic-platform
   labels:
     app.kubernetes.io/part-of: elastic-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   otel-collector-config.yml: |
     receivers:

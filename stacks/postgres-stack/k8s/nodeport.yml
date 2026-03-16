@@ -5,6 +5,8 @@ metadata:
   namespace: postgres-platform
   labels:
     app.kubernetes.io/part-of: postgres-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: NodePort
   selector:

@@ -5,6 +5,8 @@ metadata:
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   # Kafka Broker
   KAFKA_NODE_ID: "1"
@@ -42,6 +44,8 @@ metadata:
   namespace: kafka-platform
   labels:
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   kafka-kraft-start.sh: |
     #!/bin/bash

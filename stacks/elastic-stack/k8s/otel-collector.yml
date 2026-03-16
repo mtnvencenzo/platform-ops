@@ -6,6 +6,8 @@ metadata:
   labels:
     app: otel-collector
     app.kubernetes.io/part-of: elastic-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "48"
 spec:
   replicas: 1
   selector:
@@ -50,6 +52,8 @@ metadata:
   labels:
     app: otel-collector
     app.kubernetes.io/part-of: elastic-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: LoadBalancer
   selector:

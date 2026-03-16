@@ -4,3 +4,5 @@ metadata:
   name: azure-platform
   labels:
     app.kubernetes.io/part-of: azure-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"

@@ -5,6 +5,8 @@ metadata:
   namespace: dapr-platform
   labels:
     app.kubernetes.io/part-of: dapr-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
 spec:
   accessModes:
     - ReadWriteOnce

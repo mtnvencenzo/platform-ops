@@ -6,6 +6,8 @@ metadata:
   labels:
     app: open-webui
     app.kubernetes.io/part-of: ai-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "45"
 spec:
   replicas: 1
   selector:
@@ -79,6 +81,8 @@ metadata:
   labels:
     app: open-webui
     app.kubernetes.io/part-of: ai-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: ClusterIP
   selector:

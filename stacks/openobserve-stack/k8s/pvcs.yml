@@ -5,6 +5,8 @@ metadata:
   namespace: openobserve-platform
   labels:
     app.kubernetes.io/part-of: openobserve-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
 spec:
   accessModes:
     - ReadWriteOnce

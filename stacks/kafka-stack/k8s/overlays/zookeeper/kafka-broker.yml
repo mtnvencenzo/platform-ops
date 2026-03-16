@@ -6,6 +6,8 @@ metadata:
   labels:
     app: kafka-broker-1
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
 spec:
   replicas: 1
   selector:
@@ -80,6 +82,8 @@ metadata:
   labels:
     app: kafka-broker-1
     app.kubernetes.io/part-of: kafka-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: ClusterIP
   selector:

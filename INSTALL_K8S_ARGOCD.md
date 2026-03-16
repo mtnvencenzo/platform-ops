@@ -21,16 +21,35 @@ helm repo update
 ```
 
 ### Step 2: Install Argo CD
-Create a dedicated namespace and install the chart. Since this is a local k3d environment, you can use the non-HA (High Availability) version to save resources
+Create a dedicated namespace and install the chart. Since this is a local k3d environment, you can use the non-HA (High Availability) version to save resources.
+The `argocd-helm-values.yml` file contains cluster-wide configuration such as RBAC policies.
 
 ``` shell
 helm install argocd argo/argo-cd \
   --namespace argocd \
-  --create-namespace
+  --create-namespace \
+  --version 9.4.7 \
+  -f ./k8s-setup/argocd-helm-values.yml
 
 # verify
 kubectl get pods -n argocd
 ```
+
+### Upgrading ArgoCD or Applying Values Changes
+When you need to apply changes to `argocd-helm-values.yml` or upgrade the chart version, use `helm upgrade`. The `--reuse-values` flag merges your values file on top of existing settings and `--version` pins the chart to avoid an unintentional upgrade.
+
+``` shell
+helm upgrade argocd argo/argo-cd \
+  --namespace argocd \
+  -f ./k8s-setup/argocd-helm-values.yml \
+  --reuse-values \
+  --version 9.4.7
+
+# verify
+kubectl get pods -n argocd
+```
+
+_Note: Run `helm list -n argocd` to check the currently installed chart version before upgrading._
 
 ### Step 3: Allow insecure connections to Argo CD
 ``` shell

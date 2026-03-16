@@ -4,3 +4,5 @@ metadata:
   name: rabbitmq-platform
   labels:
     app.kubernetes.io/part-of: rabbitmq-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"

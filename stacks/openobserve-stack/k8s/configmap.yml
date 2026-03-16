@@ -10,6 +10,8 @@ metadata:
   namespace: openobserve-platform
   labels:
     app.kubernetes.io/part-of: openobserve-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
 data:
   otel-collector-config.yml: |
     receivers:

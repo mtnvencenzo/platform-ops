@@ -6,6 +6,8 @@ metadata:
   labels:
     app: dapr-placement
     app.kubernetes.io/part-of: dapr-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "40"
 spec:
   replicas: 1
   selector:
@@ -39,6 +41,8 @@ metadata:
   labels:
     app: dapr-placement
     app.kubernetes.io/part-of: dapr-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "30"
 spec:
   type: ClusterIP
   selector:
