@@ -15,12 +15,13 @@ Create a new cluster using k3d, which spins up K3s inside Docker:
 > NOTE: The volume mounts assume your NVIDIA userland tools (like nvidia-smi) are installed at /usr/bin/nvidia-smi and libraries at /usr/lib/x86_64-linux-gnu on the host.  If your system uses different paths, adjust accordingly.
 
 ``` shell
+# Cleanup existing cluster
 k3d cluster delete prd-local-apps-001 || true
+sudo systemctl restart docker.service
 
-az acr login -n acrveceusgloshared001
-
+# Pull the custom k3s image so we have it local
 image_name=acrveceusgloshared001.azurecr.io/cezzis/k3s:v1.31.5-k3s1.12.2.2-cuda12.2.2-base-ubuntu22.04-v1
-
+az acr login -n acrveceusgloshared001
 docker pull "$image_name"
 
 # Setup a d1rectory for k3d data for better performance
@@ -58,10 +59,7 @@ k3d cluster create prd-local-apps-001 \
   --k3s-arg "--disable=metrics-server@server:0" \
   --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*"
 
-# add more ports to the lb (adding node ports is not enough, need to tell the cluster lb to map the ports as well)
-# The additional cluter lb port mappings are already added to the cluster create command above
-#
-# rabbitmq
+# To add more ports to the lb (adding node ports is not enough, need to tell the cluster lb to map the ports as well)
 # k3d cluster edit prd-local-apps-001 --port-add 30672:30672@loadbalancer
 ```
 

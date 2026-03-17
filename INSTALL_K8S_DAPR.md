@@ -25,14 +25,14 @@ helm upgrade --install dapr dapr/dapr \
     --set global.ha.enabled=false \
     --set global.mtls.enabled=false
 
+# verify the pods are running
+kubectl get pods --namespace dapr-system
+
 # Patch the injector webhook failure policy so it fails if it cant inject dapr
 # into the pod.  This will force a retry to get dapr in there
 kubectl patch mutatingwebhookconfiguration dapr-sidecar-injector \
     --type='json' \
     -p='[{"op": "replace", "path": "/webhooks/0/failurePolicy", "value": "Fail"}]'
-    
-# verify the pods are running
-kubectl get pods --namespace dapr-system
 ```
 
 ## ~~Step 3: [Optional] Allow external access to the scheduler~~

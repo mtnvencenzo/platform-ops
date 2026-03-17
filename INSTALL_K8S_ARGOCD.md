@@ -73,7 +73,7 @@ In the editor, find the first exclusion block under `resource.exclusions` and re
   - discovery.k8s.io    # <-- remove this line
   kinds:
   - Endpoints
-  - EndpointSlice        # <-- remove this line
+  - EndpointSlice       # <-- remove this line
 
 # After:
 - apiGroups:
