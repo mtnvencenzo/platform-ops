@@ -6,10 +6,10 @@ resources:
   - configmap.yml
   - pvcs.yml
   - azurite.yml
-  - cosmosdb.yml
+  # - cosmosdb.yml
   # - sqlserver.yml
   # - eventhubs.yml
   # - servicebus.yml
   # - appconfig.yml
   - ingress.yml
-  - ingress-cosmosdb.yml
+  # - ingress-cosmosdb.yml
