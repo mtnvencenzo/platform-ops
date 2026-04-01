@@ -6,9 +6,9 @@ resources:
   - configmap.yml
   - pvcs.yml
   - qdrant.yml
-  - tei.yml
-  - tei-reranker.yml
-  - tei-splade.yml
+  # - tei.yml
+  # - tei-reranker.yml
+  # - tei-splade.yml
   - ollama-host-service.yml
   - ingress.yml
   # - ollama.yml
