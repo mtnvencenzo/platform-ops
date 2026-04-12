@@ -194,3 +194,40 @@ kubectl rollout restart deployment argocd-image-updater-controller -n argocd
 Make sure to select 'Exempt from rules'
 
 #### Step 4:  Ensure you exclude the directory that the argo cd version file gets written to from triggering a build or you'll end up in an infinite look of creating new images
+
+<br />
+
+## Private Repository Access
+When GitHub repositories are private, ArgoCD needs credentials to clone them for sync. This uses a **repository credential template** that covers all repos under the `mtnvencenzo` owner via URL prefix matching. It reuses the same GitHub App (`mtnvencenzo-argocd-writeback-app`) already used by the Image Updater for writeback.
+
+### Prerequisites
+1. Ensure the GitHub App (`mtnvencenzo-argocd-writeback-app`) is installed for **all repositories** (or at minimum every repo ArgoCD syncs from). Go to https://github.com/settings/installations/111603325 and update the repository access scope.
+2. Have the GitHub App private key PEM file available locally (`mtnvencenzo-argocd-writeback-app.private-key.pem`).
+
+### Create the credential template
+
+``` shell
+kubectl -n argocd create secret generic github-repo-creds \
+  --from-literal=type=git \
+  --from-literal=url=https://github.com/mtnvencenzo \
+  --from-literal=githubAppID=2918282 \
+  --from-literal=githubAppInstallationID=111603325 \
+  --from-file=githubAppPrivateKey=mtnvencenzo-argocd-writeback-app.private-key.pem
+
+kubectl -n argocd label secret github-repo-creds \
+  argocd.argoproj.io/secret-type=repo-creds
+```
+
+The `repo-creds` label tells ArgoCD this is a credential template. The `url` field is a prefix — any Application with a `repoURL` starting with `https://github.com/mtnvencenzo` will automatically use this credential. ArgoCD generates short-lived GitHub installation tokens from the App credentials, so there are no tokens to rotate.
+
+### Verify
+
+``` shell
+# Confirm the secret exists with the correct label
+kubectl get secret -n argocd -l argocd.argoproj.io/secret-type=repo-creds
+
+# Check ArgoCD Settings → Repositories in the UI — the template should appear
+# and connected repos should show as "Successful"
+```
+
+_Note: No changes are needed to any ArgoCD Application YAMLs — the existing `repoURL` format (`https://github.com/mtnvencenzo/...`) already matches the credential template prefix. The Image Updater's existing `git-creds` secret uses the same GitHub App and continues to work for writeback without changes._
