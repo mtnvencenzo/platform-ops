@@ -89,7 +89,9 @@ kubectl rollout restart deployment argocd-server -n argocd
 ```
 
 ### Step 5: Create the ingress for the UI
+``` shell
 kubectl apply -f ./k8s-setup/argocd-ingress.yml
+```
 
 ### Step 6: Retreive the auto-generated admin password
 
@@ -144,7 +146,7 @@ kubectl create secret docker-registry acr-pull-secret \
 ### Edit the config map
 Because the install was from github we have to manually edit the config map to add the registry config.  Inside the editor, add the registries.conf block under data:.
 
-Navigate to Rancher and select More Resources > Core > ConfigMaps and find the argocd-image-updater-config.  It should look something like this after adding he repository to the data section:
+Navigate to Rancher and select `ConfigMpas & Secrets` and find the argocd-image-updater-config.  It should look something like this after adding he repository to the data section:
 
 ``` yaml
 apiVersion: v1
@@ -159,6 +161,16 @@ data:
       prefix: acrveceusgloshared001.azurecr.io
       api_url: https://acrveceusgloshared001.azurecr.io
       credentials: pullsecret:argocd/acr-pull-secret
+```
+
+In portainer create a new key/value and use `registries.conf` as the key and:
+
+``` shell
+registries:
+- name: Azure Container Registry
+  prefix: acrveceusgloshared001.azurecr.io
+  api_url: https://acrveceusgloshared001.azurecr.io
+  credentials: pullsecret:argocd/acr-pull-secret
 ```
 
 ### Use the git writeback method

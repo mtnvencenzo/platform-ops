@@ -22,10 +22,14 @@ spec:
         app: tei-splade
         component: splade
     spec:
-      runtimeClassName: nvidia
+      # === NVIDIA GPU (commented out) ===
+      # TEI runs in CPU mode — ROCm TEI only supports AMD Instinct, not RDNA.
+      # For NVIDIA: uncomment runtimeClassName, GPU limit, CUDA env vars, and tolerations.
+      # runtimeClassName: nvidia
       containers:
         - name: tei-splade
-          image: ghcr.io/huggingface/text-embeddings-inference:1.8
+          # CPU image — for NVIDIA: change to ghcr.io/huggingface/text-embeddings-inference:1.8
+          image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
           args:
             - "--model-id"
             - "$(TEI_SPLADE_MODEL_ID)"
@@ -61,10 +65,11 @@ spec:
                   key: HF_TOKEN
             - name: HF_HOME
               value: "/root/.cache/huggingface"
-            - name: CUDA_VISIBLE_DEVICES
-              value: "all"
-            - name: NVIDIA_VISIBLE_DEVICES
-              value: "all"
+            # === NVIDIA GPU (commented out) ===
+            # - name: CUDA_VISIBLE_DEVICES
+            #   value: "all"
+            # - name: NVIDIA_VISIBLE_DEVICES
+            #   value: "all"
             - name: API_KEY
               valueFrom:
                 secretKeyRef:
@@ -78,7 +83,8 @@ spec:
               cpu: "500m"
               memory: "2Gi"
             limits:
-              nvidia.com/gpu: "1" # requesting 1 GPU
+              # === NVIDIA GPU (commented out) ===
+              # nvidia.com/gpu: "1"
               cpu: "2"
               memory: "8Gi"
           readinessProbe:
@@ -97,10 +103,11 @@ spec:
             periodSeconds: 30
             timeoutSeconds: 5
             failureThreshold: 10
-      tolerations:
-        - key: nvidia.com/gpu
-          operator: Exists
-          effect: NoSchedule
+      # === NVIDIA GPU (commented out) ===
+      # tolerations:
+      #   - key: nvidia.com/gpu
+      #     operator: Exists
+      #     effect: NoSchedule
       volumes:
         - name: hf-cache
           persistentVolumeClaim:

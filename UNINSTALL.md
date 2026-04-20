@@ -43,8 +43,8 @@ k3d cluster list
 Remove the persistent data directories that were mounted into the cluster:
 
 ``` shell
-sudo rm -rf /mnt/k3d-data
-sudo rm -rf /mnt/k3d-data-apps
+sudo rm -rf /mnt/data/k3d-node-data
+sudo rm -rf /mnt/data/k3d-app-data
 ```
 
 <br />
@@ -93,6 +93,15 @@ docker info
 ```
 
 If you have GPU support, verify GPU access is still available after the restart:
+
+**Radeon GPU (ROCm):**
+
+``` shell
+rocm-smi
+docker run --rm --device /dev/kfd --device /dev/dri --group-add video --group-add render rocm/pytorch:latest rocm-smi
+```
+
+**NVIDIA GPU:**
 
 ``` shell
 docker run --rm --gpus all nvidia/cuda:12.0.1-base-ubuntu22.04 nvidia-smi

@@ -23,11 +23,13 @@ Use the official installation script to install the latest version of k3d:
 [K3D Install](INSTALL_K3D.md)
 
 
-## ~~[Experimental / Optional] Enable GPU in Cluster~~
+## Enable GPU in Cluster
 
-> GPU support with NVIDIA drivers is now part of the cusom k3s image used when creating the k3d cluster.  See the [GPU readme](./k3d-agent-gpu/README.md) for information on running the kustom k3s image and building new custom images.
+> **Radeon GPU (ROCm):** GPU devices are passed through to K3d as volume mounts (`/dev/kfd`, `/dev/dri`) during cluster creation — no custom K3s image required. Install the AMD k8s device plugin to make GPUs allocatable.
 
-[Gpu setup steps](INSTALL_K8S_GPU.md)
+> **NVIDIA GPU:** GPU support with NVIDIA drivers is part of the custom k3s image used when creating the k3d cluster. See the [GPU readme](./k3d-agent-gpu/README.md) for information on running the custom k3s image and building new custom images.
+
+[GPU setup steps](INSTALL_K8S_GPU.md)
 
 
 ## Install a Cluster Manager (Portainer Recommended)

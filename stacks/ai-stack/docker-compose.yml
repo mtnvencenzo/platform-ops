@@ -28,15 +28,23 @@ services:
     networks:
       app-internal-network:
 
-  # Local LLM runtime (CPU by default; uses GPU automatically if NVIDIA runtime is available)
+  # Local LLM runtime with Radeon GPU (ROCm). For NVIDIA, swap image to ollama/ollama:latest,
+  # uncomment runtime: nvidia, and comment out the devices/group_add blocks.
   ollama:
     container_name: ollama
-    image: ollama/ollama:latest
+    image: ollama/ollama:rocm
     ports:
       - "${OLLAMA_PORT:-11434}:11434"
     environment:
       - OLLAMA_HOST=0.0.0.0
       - OLLAMA_NUM_GPU=20
+      # Restrict to discrete GPU(s) by device index. Run 'rocm-smi' on the host to verify
+      # device ordering — discrete GPUs have higher power draw vs the iGPU (~0W).
+      # Use comma-separated indices for multiple GPUs (e.g. 0,1). Adjust for your hardware.
+      - ROCR_VISIBLE_DEVICES=0
+      # Override GFX version for RDNA 4 (gfx1201) compatibility. Many ROCm images don't ship
+      # pre-built kernels for gfx1201 yet. Adjust for your architecture (e.g. 11.0.0 for gfx1100).
+      - HSA_OVERRIDE_GFX_VERSION=12.0.0
     volumes:
       - ollama:/root/.ollama
 
@@ -47,8 +55,21 @@ services:
       retries: 10
 
     restart: unless-stopped
-    runtime: nvidia
 
+    # === Radeon GPU (ROCm) ===
+    # Pass through AMD GPU device nodes. No special runtime required.
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    group_add:
+      - video
+      - render
+
+    # === NVIDIA GPU (commented out) ===
+    # To switch back to NVIDIA: uncomment runtime, comment out devices/group_add above,
+    # and change image to ollama/ollama:latest
+    # runtime: nvidia
+    #
     # deploy:
     #   resources:
     #     reservations:
@@ -79,16 +100,19 @@ services:
       app-internal-network:
 
   # Embeddings server (supports popular models like BGE/E5; set HF token to speed up/enable private models)
+  # Using CPU image — ROCm TEI only supports AMD Instinct (MI200/MI300), not RDNA consumer cards.
+  # To switch back to NVIDIA GPU: change image tag to :1.8, uncomment CUDA/NVIDIA env vars
+  # and the deploy.resources block, remove the CPU note.
   tei:
     container_name: tei
-    image: ghcr.io/huggingface/text-embeddings-inference:1.8
-    # NOTE: If using GPU, run under the `gpu` profile and ensure NVIDIA drivers/toolkit are installed.
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
     command: ["--model-id", "${TEI_MODEL_ID:-sentence-transformers/all-mpnet-base-v2}", "--max-client-batch-size", "${TEI_MAX_CLIENT_BATCH:-128}", "--port", "${TEI_PORT:-8989}"]
     environment:
       - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
       - HF_HOME=/root/.cache/huggingface
-      - CUDA_VISIBLE_DEVICES=all
-      - NVIDIA_VISIBLE_DEVICES=all
+      # === NVIDIA GPU (commented out) ===
+      # - CUDA_VISIBLE_DEVICES=all
+      # - NVIDIA_VISIBLE_DEVICES=all
       - API_KEY=${TEI_API_KEY:-6307fd7e-8ab7-4d21-bf20-3efd2c5a17f3}
     ports:
       - "${TEI_PORT:-8989}:${TEI_PORT:-8989}"
@@ -103,24 +127,27 @@ services:
     networks:
       app-internal-network:
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # === NVIDIA GPU (commented out) ===
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
   # Cross-encoder reranker (TEI /rerank endpoint)
+  # Using CPU image — see tei service note above about ROCm/RDNA limitation.
   tei-reranker:
     container_name: tei-reranker
-    image: ghcr.io/huggingface/text-embeddings-inference:1.8
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
     command: ["--model-id", "${TEI_RERANKER_MODEL_ID:-cross-encoder/ms-marco-MiniLM-L-6-v2}", "--max-client-batch-size", "${TEI_RERANKER_MAX_CLIENT_BATCH:-64}", "--port", "${TEI_RERANKER_PORT:-8990}"]
     environment:
       - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
       - HF_HOME=/root/.cache/huggingface
-      - CUDA_VISIBLE_DEVICES=all
-      - NVIDIA_VISIBLE_DEVICES=all
+      # === NVIDIA GPU (commented out) ===
+      # - CUDA_VISIBLE_DEVICES=all
+      # - NVIDIA_VISIBLE_DEVICES=all
       - API_KEY=${TEI_RERANKER_API_KEY:-6307fd7e-8ab7-4d21-bf20-3efd2c5a17f3}
     ports:
       - "${TEI_RERANKER_PORT:-8990}:${TEI_RERANKER_PORT:-8990}"
@@ -135,24 +162,27 @@ services:
     networks:
       app-internal-network:
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # === NVIDIA GPU (commented out) ===
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
   # SPLADE sparse encoder (TEI /embed_sparse endpoint)
+  # Using CPU image — see tei service note above about ROCm/RDNA limitation.
   tei-splade:
     container_name: tei-splade
-    image: ghcr.io/huggingface/text-embeddings-inference:1.8
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
     command: ["--model-id", "${TEI_SPLADE_MODEL_ID:-naver/splade-cocondenser-ensembledistil}", "--max-client-batch-size", "${TEI_SPLADE_MAX_CLIENT_BATCH:-64}", "--port", "${TEI_SPLADE_PORT:-8991}", "--pooling", "splade"]
     environment:
       - HUGGING_FACE_HUB_TOKEN=${HF_TOKEN}
       - HF_HOME=/root/.cache/huggingface
-      - CUDA_VISIBLE_DEVICES=all
-      - NVIDIA_VISIBLE_DEVICES=all
+      # === NVIDIA GPU (commented out) ===
+      # - CUDA_VISIBLE_DEVICES=all
+      # - NVIDIA_VISIBLE_DEVICES=all
       - API_KEY=${TEI_SPLADE_API_KEY:-6307fd7e-8ab7-4d21-bf20-3efd2c5a17f3}
     ports:
       - "${TEI_SPLADE_PORT:-8991}:${TEI_SPLADE_PORT:-8991}"
@@ -167,13 +197,14 @@ services:
     networks:
       app-internal-network:
 
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
+    # === NVIDIA GPU (commented out) ===
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
 
 networks:
   app-internal-network:

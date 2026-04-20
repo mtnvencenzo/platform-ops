@@ -56,7 +56,7 @@ sudo systemctl stop docker.service && sudo systemctl stop docker.socket
 ### Step 2: Create the data directory
 
 ``` shell
-sudo mkdir -p /opt/docker
+sudo mkdir -p /mnt/data/docker
 ```
 
 ### Step 3: Configure docker daemon
@@ -64,7 +64,7 @@ sudo mkdir -p /opt/docker
 ``` shell
 sudo tee -a /etc/docker/daemon.json <<'EOF'
 {
-  "data-root": "/opt/docker",
+  "data-root": "/mnt/data/docker",
   "log-driver": "json-file",
   "log-opts": { "max-size": "10m", "max-file": "3" }
 }
@@ -73,8 +73,7 @@ EOF
 
 If you setup gpu support the end result should be similar to:
 
-``` json
-You should see output similar to:
+> **Note:** The `default-runtime` and `runtimes` blocks are only needed for **NVIDIA GPU** setups. For **Radeon GPU (ROCm)**, no special Docker runtime is required — your `daemon.json` only needs the `data-root` and `log-*` settings shown in Step 3 above.
 
 ```json
 {
@@ -85,7 +84,7 @@ You should see output similar to:
       "runtimeArgs": []
     }
   },
-  "data-root": "/opt/docker",
+  "data-root": "/mnt/data/docker",
   "log-driver": "json-file",
   "log-opts": { "max-size": "10m", "max-file": "3" }
 }
@@ -95,7 +94,7 @@ You should see output similar to:
 ### Step 4: Migrate data to new directory
 
 ``` shell
-sudo rsync -aP /var/lib/docker/ /opt/docker/
+sudo rsync -aP /var/lib/docker/ /mnt/data/docker/
 ```
 
 

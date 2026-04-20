@@ -43,9 +43,136 @@ sudo usermod -aG docker $USER
 ```
 <br/>
 
-## Enable GPU Support (Experimental)
+## Enable GPU Support
 
-### Enable NVIDIA GPU Support on the Host
+Choose the section that matches your GPU hardware.
+
+<br/>
+
+### Radeon GPU (ROCm)
+
+#### Step 1: Verify the amdgpu Kernel Driver is Loaded
+
+The `amdgpu` driver is built into modern Linux kernels (6.x+). Verify it is loaded and your GPU devices are present:
+
+```bash
+lsmod | grep amdgpu
+ls /dev/kfd
+ls /dev/dri/renderD*
+```
+
+You should see `/dev/kfd` (Kernel Fusion Driver for compute) and at least one `/dev/dri/renderD128` device. If not, check that your kernel supports your GPU and that the `amdgpu` module is loaded.
+
+#### Step 2: Install ROCm on the Host
+
+Install the ROCm userspace packages. These provide `rocm-smi`, HIP runtime, and related tools:
+
+```bash
+# Add the AMD ROCm repository
+sudo mkdir -p --mode=0755 /etc/apt/keyrings
+wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
+  gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
+
+# Add the AMDGPU and ROCm repositories (adjust for your Ubuntu version)
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/latest/ubuntu $(lsb_release -cs) main" | \
+  sudo tee /etc/apt/sources.list.d/amdgpu.list
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/latest $(lsb_release -cs) main" | \
+  sudo tee /etc/apt/sources.list.d/rocm.list
+
+# Pin ROCm packages to prefer the AMD repository
+echo -e 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' | \
+  sudo tee /etc/apt/preferences.d/rocm-pin-600
+
+sudo apt-get update
+sudo apt-get install -y rocm-smi-lib rocm-hip-runtime
+```
+
+ROCm binaries install to `/opt/rocm/bin` which is not on the default PATH. Add it so that `rocm-smi`, `rocminfo`, and other tools are available:
+
+```bash
+echo 'export PATH=$PATH:/opt/rocm/bin' >> ~/.bashrc
+source ~/.bashrc
+```
+
+_Note: Check the [ROCm installation docs](https://rocm.docs.amd.com/projects/install-on-linux/en/latest/) for the latest instructions and supported Ubuntu versions._
+
+#### Step 3: Add Your User to the video and render Groups
+
+GPU device access requires membership in the `video` and `render` groups:
+
+```bash
+sudo usermod -aG video,render $USER
+# Log out and log back in for changes to take effect
+```
+
+#### Step 4: Verify ROCm on the Host
+
+```bash
+rocm-smi
+rocminfo | head -10000
+```
+
+You should see your Radeon GPU listed with its device name under the HSA Agents section (the first ~40 lines show only the CPU agent — the GPU agents appear after). If `rocm-smi` shows no devices, troubleshoot before continuing.
+
+> **RDNA 4 Note:** ROCm support for RDNA 4 (Radeon RX 9000 series) is relatively new. If `rocm-smi` does not detect your card, ensure you are running the latest ROCm version and a kernel ≥ 6.12. Check the [ROCm compatibility matrix](https://rocm.docs.amd.com/en/latest/compatibility/compatibility-matrix.html) for your specific GPU.
+
+#### Step 5: Identify Your GPU and Configure Selection
+
+If your system has multiple AMD GPUs (e.g. a discrete Radeon plus an integrated Ryzen iGPU), you need to identify which device index corresponds to your discrete GPU so workloads target the correct one.
+
+List all detected GPUs and note the device index, DID, power draw, and clock speeds:
+
+```bash
+rocm-smi
+```
+
+The discrete GPU will typically show higher power draw (e.g. 10W+ idle) and a meaningful power cap (e.g. 300W), while an integrated GPU shows near-zero power (e.g. 0.01W) and no power cap. Note the **Device** index (usually `0`) of your discrete GPU.
+
+Next, identify the GPU architecture:
+
+```bash
+rocminfo | grep -i gfx
+```
+
+This shows the `gfx` target for each GPU (e.g. `gfx1201` for RDNA 4, `gfx1100` for RDNA 3). Note the architecture of your discrete GPU — you may need it for troubleshooting.
+
+**GPU Selection with `ROCR_VISIBLE_DEVICES`:** To restrict ROCm workloads to specific GPUs, set the `ROCR_VISIBLE_DEVICES` environment variable to a comma-separated list of device indices. Exclude any GPUs you don't want used for compute (e.g. an integrated GPU).
+
+```bash
+# Single discrete GPU (Device 0 only)
+ROCR_VISIBLE_DEVICES=0 rocm-smi
+
+# Multiple discrete GPUs (e.g. Devices 0 and 1, excluding iGPU at Device 2)
+ROCR_VISIBLE_DEVICES=0,1 rocm-smi
+```
+
+You should see only the targeted GPUs listed. This variable is used in Docker Compose and Kubernetes configurations to ensure workloads target the correct GPU(s). Adjust the indices based on your `rocm-smi` output.
+
+> **`HSA_OVERRIDE_GFX_VERSION`:** Some ROCm applications (PyTorch, Ollama, etc.) may not include pre-built binaries for newer GPU architectures. If workloads fail with "no GPU agent" errors despite `rocm-smi` detecting the GPU, set `HSA_OVERRIDE_GFX_VERSION` to the major.minor.0 of your architecture (e.g. `12.0.0` for `gfx1201`, `11.0.0` for `gfx1100`). This tells the HIP runtime to use compatible code for your GPU.
+
+#### Step 6: Verify GPU Access at the Docker Level
+
+No special Docker runtime is required for AMD GPUs — devices are passed through directly. Verify Docker can access the GPU with the correct device targeted:
+
+```bash
+# Single discrete GPU
+docker run --rm --device /dev/kfd --device /dev/dri \
+  -e ROCR_VISIBLE_DEVICES=0 \
+  rocm/pytorch:latest rocm-smi
+
+# Multiple discrete GPUs (adjust indices to match your hardware)
+# docker run --rm --device /dev/kfd --device /dev/dri \
+#   -e ROCR_VISIBLE_DEVICES=0,1 \
+#   rocm/pytorch:latest rocm-smi
+```
+
+You should see only the targeted discrete GPU(s) listed — not the iGPU. If this command does not show your GPU, stop here and troubleshoot before continuing.
+
+> **Image Compatibility Note:** The `rocm/pytorch:latest` image may not include pre-built kernels for newer GPU architectures (e.g. RDNA 4 `gfx1201`). If `rocm-smi` works but PyTorch operations fail, add `-e HSA_OVERRIDE_GFX_VERSION=12.0.0` (adjust the version for your architecture) to the Docker run command.
+
+<br/>
+
+### NVIDIA GPU
 
 #### Step 1: Install NVIDIA Drivers on the Host
 

@@ -10,7 +10,15 @@ metadata:
 data:
   # Ollama
   OLLAMA_HOST: "0.0.0.0"
-  OLLAMA_NUM_GPU: "20"
+  # OLLAMA_NUM_GPU controls how many GPU layers to offload. Works with both NVIDIA (CUDA) and AMD (ROCm).
+  OLLAMA_NUM_GPU: "999"
+  # Restrict ROCm workloads to specific GPU(s) by device index. Run 'rocm-smi' on the host to identify
+  # discrete GPUs (higher power draw) vs the iGPU (~0W). Use comma-separated indices for multiple
+  # GPUs (e.g. "0,1"). Adjust if your hardware differs.
+  ROCR_VISIBLE_DEVICES: "0"
+  # Override GFX version for RDNA 4 (gfx1201) compatibility. Many ROCm images don't ship
+  # pre-built kernels for gfx1201 yet. Adjust for your architecture (e.g. "11.0.0" for gfx1100).
+  HSA_OVERRIDE_GFX_VERSION: "12.0.0"
 
   # Open WebUI
   OLLAMA_BASE_URL: "http://ollama:11434"

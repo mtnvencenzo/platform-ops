@@ -1,6 +1,67 @@
-# --------------------------------------------------------------
+# ==============================================================
+# RADEON GPU (ROCm) Support
+# ==============================================================
+
+## Test Radeon GPU support
+rocm-smi
+ls /dev/kfd
+ls /dev/dri/renderD*
+rocminfo | head -40
+
+## Identify GPU architecture and device ordering
+rocminfo | grep -i gfx
+# Discrete GPUs typically have higher power draw (e.g. 10W+) vs iGPU (~0W)
+# Note the Device indices of your discrete GPU(s) for ROCR_VISIBLE_DEVICES
+# Single GPU:
+ROCR_VISIBLE_DEVICES=0 rocm-smi
+# Multiple GPUs (comma-separated):
+# ROCR_VISIBLE_DEVICES=0,1 rocm-smi
+
+# Test Docker Radeon GPU support (targeting discrete GPU)
+docker run --rm --device /dev/kfd --device /dev/dri -e ROCR_VISIBLE_DEVICES=0 rocm/pytorch:latest rocm-smi
+
+
+# ================================================================
+# Uninstall ROCm for a fresh reinstall
+# ================================================================
+sudo apt purge --autoremove -y rocm-smi-lib rocm-hip-runtime
+sudo rm -f /etc/apt/sources.list.d/amdgpu.list
+sudo rm -f /etc/apt/sources.list.d/rocm.list
+sudo rm -f /etc/apt/preferences.d/rocm-pin-600
+sudo rm -f /etc/apt/keyrings/rocm.gpg
+sudo apt-get update
+
+
+# ================================================================
+# Reinstall ROCm
+# https://rocm.docs.amd.com/projects/install-on-linux/en/latest/
+# ================================================================
+sudo mkdir -p --mode=0755 /etc/apt/keyrings
+wget https://repo.radeon.com/rocm/rocm.gpg.key -O - | \
+  gpg --dearmor | sudo tee /etc/apt/keyrings/rocm.gpg > /dev/null
+
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/amdgpu/latest/ubuntu $(lsb_release -cs) main" | \
+  sudo tee /etc/apt/sources.list.d/amdgpu.list
+echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/rocm.gpg] https://repo.radeon.com/rocm/apt/latest $(lsb_release -cs) main" | \
+  sudo tee /etc/apt/sources.list.d/rocm.list
+
+echo -e 'Package: *\nPin: release o=repo.radeon.com\nPin-Priority: 600' | \
+  sudo tee /etc/apt/preferences.d/rocm-pin-600
+
+sudo apt-get update
+sudo apt-get install -y rocm-smi-lib rocm-hip-runtime
+
+# Add ROCm to PATH (installs to /opt/rocm/bin by default)
+echo 'export PATH=$PATH:/opt/rocm/bin' >> ~/.bashrc
+source ~/.bashrc
+
+## Verify
+rocm-smi
+
+
+# ==============================================================
 # NVIDIA GPU Support
-# --------------------------------------------------------------
+# ==============================================================
 
 ## Test gpu support
 nvidia-smi

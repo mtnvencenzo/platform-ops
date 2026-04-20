@@ -33,6 +33,9 @@ kubectl get pods --namespace dapr-system
 kubectl patch mutatingwebhookconfiguration dapr-sidecar-injector \
     --type='json' \
     -p='[{"op": "replace", "path": "/webhooks/0/failurePolicy", "value": "Fail"}]'
+
+# restart
+kubectl rollout restart deploy -n dapr-system
 ```
 
 ## ~~Step 3: [Optional] Allow external access to the scheduler~~
@@ -45,6 +48,7 @@ since the k3d dapr-system requires tls and mtls.  Apps within the cluster connec
 # This only works with the dapr platform stack, not the dapr-system because the dapr system
 # requires tls and is a pain from local dev
 kubectl apply -f k8s-setup/dapr-scheduler-nodeport.yml
+
 ```
 
 ## Step 4: [Optional] Install the dapr dashboard

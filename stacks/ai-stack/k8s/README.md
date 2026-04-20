@@ -17,10 +17,12 @@ Kubernetes manifests for deploying the AI stack to a local k3d cluster via ArgoC
 ## Prerequisites
 
 - k3d cluster running (see [INSTALL_K3D.md](../../../INSTALL_K3D.md))
-- NVIDIA GPU + drivers installed (for TEI GPU workloads)
-- [NVIDIA k8s device plugin](https://github.com/NVIDIA/k8s-device-plugin) installed in the cluster (see [INSTALL_K8S_GPU.md](../../../INSTALL_K8S_GPU.md))
-- `nvidia` RuntimeClass configured
+- GPU device plugin installed in the cluster (see [INSTALL_K8S_GPU.md](../../../INSTALL_K8S_GPU.md)):
+  - **Radeon GPU (ROCm):** AMD k8s device plugin (`amd.com/gpu` allocatable). No special RuntimeClass needed.
+  - **NVIDIA GPU:** NVIDIA GPU Operator + `nvidia` RuntimeClass configured.
 - ArgoCD installed and configured to allow EndpointSlice resources (see [INSTALL_K8S_ARGOCD.md](../../../INSTALL_K8S_ARGOCD.md) Step 4)
+
+> **TEI Note:** The TEI (text-embeddings-inference) services run in **CPU mode** when using a Radeon GPU. ROCm TEI only supports AMD Instinct accelerators (MI200/MI300), not RDNA consumer cards. The manifests use the `:cpu-1.9` image tag accordingly. To switch back to NVIDIA GPU mode, see the commented-out sections in each TEI manifest.
 
 ## Deploy
 
@@ -72,15 +74,19 @@ To verify the gateway matches:
 docker network inspect k3d-prd-local-apps-001 --format '{{(index .IPAM.Config 0).Gateway}}'
 ```
 
-### Running Without GPU
+### GPU Configuration
 
-If you don't have an NVIDIA GPU, remove or comment out these lines from the TEI deployments:
+The manifests are configured for **Radeon GPU (ROCm)** by default:
 
-1. `runtimeClassName: nvidia`
-2. `nvidia.com/gpu: "1"` from resource limits
-3. The `CUDA_VISIBLE_DEVICES` and `NVIDIA_VISIBLE_DEVICES` env vars
+- **Ollama:** Uses `ollama/ollama:rocm` image with `amd.com/gpu: 1` resource limit.
+- **TEI services:** Run in CPU mode (`ghcr.io/huggingface/text-embeddings-inference:cpu-1.9`).
 
-You may also need to switch to a CPU-compatible image tag (e.g., `ghcr.io/huggingface/text-embeddings-inference:cpu-1.8`).
+To switch to **NVIDIA GPU**, follow the commented instructions in each manifest:
+1. Uncomment `runtimeClassName: nvidia`
+2. Swap `amd.com/gpu` → `nvidia.com/gpu` (ollama) or uncomment the GPU limit (TEI)
+3. Uncomment `CUDA_VISIBLE_DEVICES` and `NVIDIA_VISIBLE_DEVICES` env vars (TEI)
+4. Uncomment the NVIDIA tolerations (TEI)
+5. Change TEI image tags from `:cpu-1.9` to `:1.8`
 
 ## Verify
 
