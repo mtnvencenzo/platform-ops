@@ -43,7 +43,7 @@ kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs
 kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/redis-stack/argocd/redis-stack-app.yaml
 
 # kafka stack (kraft)
-kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/kafka-stack/argocd/kafka-stack-kraft-app.yaml
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/kafka-stack/argocd/kafka-stack-kraft-3broker-app.yaml
 
 # dapr stack
 kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/dapr-stack/argocd/dapr-stack-app.yaml

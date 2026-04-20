@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kafka-stack-zookeeper
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/mtnvencenzo/platform-ops.git'
+    targetRevision: main
+    path: stacks/kafka-stack/k8s/overlays/zookeeper
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: kafka-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        maxDuration: 3m0s
+        factor: 2
