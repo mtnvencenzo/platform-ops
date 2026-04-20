@@ -28,17 +28,73 @@ helm upgrade --install dapr dapr/dapr \
 # verify the pods are running
 kubectl get pods --namespace dapr-system
 
-# Patch the injector webhook failure policy so it fails if it cant inject dapr
-# into the pod.  This will force a retry to get dapr in there
-kubectl patch mutatingwebhookconfiguration dapr-sidecar-injector \
-    --type='json' \
-    -p='[{"op": "replace", "path": "/webhooks/0/failurePolicy", "value": "Fail"}]'
-
 # restart
 kubectl rollout restart deploy -n dapr-system
 ```
 
-## ~~Step 3: [Optional] Allow external access to the scheduler~~
+## Step 3: Scope the Injector Webhook
+
+In this cluster, the injector webhook must be namespace-scoped before enabling fail-closed admission. If `failurePolicy` is set to `Fail` while the webhook still matches all pod creations, a reboot or control-plane restart can deadlock Kubernetes admission: Dapr control-plane pods and unrelated workloads such as Argo CD will both be blocked waiting on the injector.
+
+Use the namespace label `dapr-injection=enabled` on application namespaces that should be eligible for Dapr sidecar injection. Do not add this label to infrastructure namespaces such as `argocd`, `kube-system`, or `dapr-system`.
+
+Patch the webhook so it only matches labeled namespaces and fails closed inside those namespaces:
+
+``` shell
+kubectl patch mutatingwebhookconfiguration dapr-sidecar-injector \
+    --type='json' \
+    -p='[
+        {
+            "op": "add",
+            "path": "/webhooks/0/namespaceSelector",
+            "value": {
+                "matchLabels": {
+                    "dapr-injection": "enabled"
+                }
+            }
+        },
+        {
+            "op": "replace",
+            "path": "/webhooks/0/failurePolicy",
+            "value": "Fail"
+        }
+    ]'
+```
+
+Then label only the application namespaces that should participate in Dapr sidecar injection:
+
+
+``` yaml
+# Example namespace manifest:
+
+apiVersion: v1
+kind: Namespace
+metadata:
+    name: cezzis
+    labels:
+        app.kubernetes.io/part-of: cezzis
+        app.kubernetes.io/managed-by: argocd
+        dapr-injection: enabled
+    annotations:
+        argocd.argoproj.io/sync-wave: "0"
+```
+
+Verify the webhook and namespace labels:
+
+``` shell
+kubectl get mutatingwebhookconfiguration dapr-sidecar-injector -o yaml
+kubectl get ns --show-labels
+```
+
+If the cluster is ever left in the unsafe all-pods configuration with `failurePolicy=Fail`, recover by restoring the default behavior first:
+
+``` shell
+kubectl patch mutatingwebhookconfiguration dapr-sidecar-injector \
+    --type='json' \
+    -p='[{"op": "replace", "path": "/webhooks/0/failurePolicy", "value": "Ignore"}]'
+```
+
+## Optional: Allow external access to the scheduler
 Optionally add a node port to the scheduler so it's available outside the cluster.  This is helpful for local development. 
 
 __NOTE:__ For local app development I am using a docker compose setup on the host machine
@@ -51,7 +107,7 @@ kubectl apply -f k8s-setup/dapr-scheduler-nodeport.yml
 
 ```
 
-## Step 4: [Optional] Install the dapr dashboard
+## Optional: Install the dapr dashboard
 Optionally install the dapr dashboard
 
 ``` shell

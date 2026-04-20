@@ -46,6 +46,8 @@ k3d cluster create prd-local-apps-001 \
   -p "9000:9000@loadbalancer" \
   -p "30672:30672@loadbalancer" \
   -p "30092:30092@loadbalancer" \
+  -p "30093:30093@loadbalancer" \
+  -p "30095:30095@loadbalancer" \
   -p "30432:30432@loadbalancer" \
   --volume "/mnt/data/k3d-node-data:/var/lib/rancher/k3s/storage@all" \
   --volume "/mnt/data/k3d-app-data:/pods@all" \
@@ -61,7 +63,7 @@ k3d cluster create prd-local-apps-001 \
   --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*"
 
 # To add more ports to the lb (adding node ports is not enough, need to tell the cluster lb to map the ports as well)
-# k3d cluster edit prd-local-apps-001 --port-add 30672:30672@loadbalancer
+# k3d cluster edit prd-local-apps-001 --port-add 30095:30095@loadbalancer
 ```
 
 ### NVIDIA GPU
