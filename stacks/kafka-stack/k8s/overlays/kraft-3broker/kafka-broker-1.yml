@@ -39,7 +39,7 @@ spec:
             - name: KAFKA_LISTENERS
               value: "PLAINTEXT_INTERNAL://0.0.0.0:19092,CONTROLLER://0.0.0.0:9094,EXTERNAL://0.0.0.0:9092"
             - name: KAFKA_ADVERTISED_LISTENERS
-              value: "PLAINTEXT_INTERNAL://kafka-broker-1:19092,EXTERNAL://localhost:30092"
+              value: "PLAINTEXT_INTERNAL://kafka-broker-1.kafka-platform.svc.cluster.local:19092,EXTERNAL://localhost:30092"
           envFrom:
             - configMapRef:
                 name: kafka-platform-config
