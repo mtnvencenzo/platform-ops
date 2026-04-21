@@ -30,7 +30,7 @@ services:
       KAFKA_BROKER_SESSION_TIMEOUT_MS: 9000
       KAFKA_CONTROLLER_SOCKET_TIMEOUT_MS: 10000
       KAFKA_METADATA_MAX_IDLE_INTERVAL_MS: 10000
-      KAFKA_CONNECTIONS_MAX_IDLE_MS: 10000
+      KAFKA_CONNECTIONS_MAX_IDLE_MS: 600000
     entrypoint: /scripts/kafka-kraft-start.sh
     volumes:
       - vol_kafka1:/var/lib/kafka/data
@@ -68,7 +68,7 @@ services:
       KAFKA_BROKER_SESSION_TIMEOUT_MS: 9000
       KAFKA_CONTROLLER_SOCKET_TIMEOUT_MS: 10000
       KAFKA_METADATA_MAX_IDLE_INTERVAL_MS: 10000
-      KAFKA_CONNECTIONS_MAX_IDLE_MS: 10000
+      KAFKA_CONNECTIONS_MAX_IDLE_MS: 600000
     entrypoint: /scripts/kafka-kraft-start.sh
     volumes:
       - vol_kafka2:/var/lib/kafka/data
@@ -106,7 +106,7 @@ services:
       KAFKA_BROKER_SESSION_TIMEOUT_MS: 9000
       KAFKA_CONTROLLER_SOCKET_TIMEOUT_MS: 10000
       KAFKA_METADATA_MAX_IDLE_INTERVAL_MS: 10000
-      KAFKA_CONNECTIONS_MAX_IDLE_MS: 10000
+      KAFKA_CONNECTIONS_MAX_IDLE_MS: 600000
     entrypoint: /scripts/kafka-kraft-start.sh
     volumes:
       - vol_kafka3:/var/lib/kafka/data
