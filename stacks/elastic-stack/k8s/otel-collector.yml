@@ -32,13 +32,6 @@ spec:
               mountPath: /etc/otel-collector-config.yml
               subPath: otel-collector-config.yml
               readOnly: true
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "1"
-              memory: "1Gi"
       volumes:
         - name: otel-config
           configMap:
@@ -55,7 +48,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "30"
 spec:
-  type: LoadBalancer
+  type: ClusterIP
   selector:
     app: otel-collector
   ports:
