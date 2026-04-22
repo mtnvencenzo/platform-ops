@@ -120,6 +120,10 @@ sudo systemctl restart ollama.service
 
 # Verify - You should see output indicating that it is listening on *:11434 or 0.0.0.0:11434, instead of 127.0.0.1:11434
 sudo ss -antp | grep 11434
+
+# If ufw is enabled, allow the k3d pod network to reach Ollama on the host.
+# The 172.18.0.0/16 subnet is the fixed k3d network created in INSTALL_K3D.md (best to verify this).
+sudo ufw allow from 172.18.0.0/16 to any port 11434 comment 'k3d pods -> host ollama'
 ```
 
 ---
