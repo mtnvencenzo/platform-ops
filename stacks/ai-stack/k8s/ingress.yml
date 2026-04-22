@@ -11,6 +11,17 @@ metadata:
     argocd.argoproj.io/sync-wave: "50"
 spec:
   rules:
+    # Open WebUI - accessible at http://open-webui.127.0.0.1.sslip.io
+    - host: open-webui.127.0.0.1.sslip.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: open-webui
+                port:
+                  number: 3000
     # Qdrant – accessible at http://qdrant.127.0.0.1.sslip.io
     - host: qdrant.127.0.0.1.sslip.io
       http:

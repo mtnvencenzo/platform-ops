@@ -21,7 +21,7 @@ data:
   HSA_OVERRIDE_GFX_VERSION: "12.0.0"
 
   # Open WebUI
-  OLLAMA_BASE_URL: "http://ollama:11434"
+  OLLAMA_BASE_URL: "http://ollama-host:11434"
   WEBUI_NAME: "AI Stack WebUI"
   TZ: "UTC"
 
