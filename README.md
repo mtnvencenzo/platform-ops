@@ -35,13 +35,6 @@ Follow the [Kubernetes Installation Guide](./INSTALL.md) which includes Docker i
 
 Each stack is self-contained with its own `docker-compose.yml` and documentation. Navigate to the stack directory and follow the README instructions to start the services.
 
-## Community & Support
-
-- [Contributing Guide](.github/CONTRIBUTING.md)
-- [Code of Conduct](.github/CODE_OF_CONDUCT.md)
-- [Support Guide](.github/SUPPORT.md)
-- [Security Policy](.github/SECURITY.md)
-
 ## License
 
 This project is licensed under the terms of the [LICENSE](LICENSE) file.
