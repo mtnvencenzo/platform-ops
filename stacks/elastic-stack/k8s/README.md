@@ -24,6 +24,7 @@ kubectl apply -f k8s/namespace.yml
 kubectl apply -f k8s/configmap.yml
 kubectl apply -f k8s/pvcs.yml
 kubectl apply -f k8s/elasticsearch.yml
+kubectl apply -f k8s/elasticsearch-ilm-bootstrap.yml
 kubectl apply -f k8s/kibana.yml         # depends on elasticsearch
 kubectl apply -f k8s/apm-server.yml      # depends on elasticsearch + kibana
 kubectl apply -f k8s/otel-collector.yml  # depends on apm-server

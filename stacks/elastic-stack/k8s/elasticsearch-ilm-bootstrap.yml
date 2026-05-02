@@ -1,0 +1,84 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: elasticsearch-ilm-bootstrap
+  namespace: elastic-platform
+  labels:
+    app.kubernetes.io/name: elasticsearch-ilm-bootstrap
+    app.kubernetes.io/part-of: elastic-platform
+  annotations:
+    argocd.argoproj.io/sync-wave: "42"
+spec:
+  ttlSecondsAfterFinished: 300
+  backoffLimit: 6
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: elasticsearch-ilm-bootstrap
+        app.kubernetes.io/part-of: elastic-platform
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: ilm-bootstrap
+          image: curlimages/curl:8.12.1
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+
+              es_url="http://elasticsearch:9200"
+
+              echo "Waiting for Elasticsearch readiness..."
+              until curl -fsS "${es_url}/_cluster/health?wait_for_status=yellow&timeout=5s" >/dev/null; do
+                sleep 5
+              done
+
+              echo "Upserting ILM policy: observability-3d"
+              curl -fsS -X PUT "${es_url}/_ilm/policy/observability-3d" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "policy": {
+                    "phases": {
+                      "hot": {
+                        "actions": {
+                          "rollover": {
+                            "max_age": "1d",
+                            "max_primary_shard_size": "20gb"
+                          }
+                        }
+                      },
+                      "delete": {
+                        "min_age": "3d",
+                        "actions": {
+                          "delete": {}
+                        }
+                      }
+                    }
+                  }
+                }'
+
+              echo "Upserting composable index templates for logs, traces, and metrics"
+              for stream in logs traces metrics; do
+                curl -fsS -X PUT "${es_url}/_index_template/obs-${stream}-3d" \
+                  -H "Content-Type: application/json" \
+                  -d "{
+                    \"index_patterns\": [\"${stream}-*\"],
+                    \"priority\": 350,
+                    \"template\": {
+                      \"settings\": {
+                        \"index.lifecycle.name\": \"observability-3d\"
+                      }
+                    },
+                    \"data_stream\": {}
+                  }"
+              done
+
+              echo "Applying ILM to existing indices/backing indices (if any)"
+              curl -fsS -X PUT "${es_url}/logs-*,traces-*,metrics-*/_settings?expand_wildcards=all&ignore_unavailable=true&allow_no_indices=true" \
+                -H "Content-Type: application/json" \
+                -d '{
+                  "index.lifecycle.name": "observability-3d"
+                }' || true
+
+              echo "ILM bootstrap complete"

@@ -6,6 +6,7 @@ resources:
   - configmap.yml
   - pvcs.yml
   - elasticsearch.yml
+  - elasticsearch-ilm-bootstrap.yml
   - kibana.yml
   - apm-server.yml
   - otel-collector.yml
