@@ -58,21 +58,14 @@ spec:
                   }
                 }'
 
-              echo "Upserting composable index templates for logs, traces, and metrics"
-              for stream in logs traces metrics; do
-                curl -fsS -X PUT "${es_url}/_index_template/obs-${stream}-3d" \
+              echo "Applying 3d data stream retention for APM streams (mapping-safe)"
+              curl -fsS "${es_url}/_data_stream" 2>/dev/null | \
+                grep -o '"name":"[^"]*"' | sed 's/"name":"//;s/"//' | \
+                grep -E '^(logs-apm|traces-apm|metrics-apm)' | while read ds; do
+                curl -fsS -X PUT "${es_url}/_data_stream/${ds}/_lifecycle" \
                   -H "Content-Type: application/json" \
-                  -d "{
-                    \"index_patterns\": [\"${stream}-*\"],
-                    \"priority\": 350,
-                    \"template\": {
-                      \"settings\": {
-                        \"index.lifecycle.name\": \"observability-3d\"
-                      }
-                    },
-                    \"data_stream\": {}
-                  }"
-              done
+                  -d '{"data_retention":"3d"}' >/dev/null 2>&1
+              done || true
 
               echo "Applying ILM to existing indices/backing indices (if any)"
               curl -fsS -X PUT "${es_url}/logs-*,traces-*,metrics-*/_settings?expand_wildcards=all&ignore_unavailable=true&allow_no_indices=true" \
