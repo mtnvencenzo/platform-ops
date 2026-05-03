@@ -34,30 +34,6 @@ spec:
                 sleep 5
               done
 
-              echo "Upserting ILM policy: observability-3d"
-              curl -fsS -X PUT "${es_url}/_ilm/policy/observability-3d" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "policy": {
-                    "phases": {
-                      "hot": {
-                        "actions": {
-                          "rollover": {
-                            "max_age": "1d",
-                            "max_primary_shard_size": "20gb"
-                          }
-                        }
-                      },
-                      "delete": {
-                        "min_age": "3d",
-                        "actions": {
-                          "delete": {}
-                        }
-                      }
-                    }
-                  }
-                }'
-
               echo "Applying 3d data stream retention for APM streams (mapping-safe)"
               curl -fsS "${es_url}/_data_stream" 2>/dev/null | \
                 grep -o '"name":"[^"]*"' | sed 's/"name":"//;s/"//' | \
@@ -66,31 +42,5 @@ spec:
                   -H "Content-Type: application/json" \
                   -d '{"data_retention":"3d"}' >/dev/null 2>&1
               done || true
-
-              echo "Applying ILM to existing indices/backing indices (if any)"
-              curl -fsS -X PUT "${es_url}/logs-*,traces-*,metrics-*/_settings?expand_wildcards=all&ignore_unavailable=true&allow_no_indices=true" \
-                -H "Content-Type: application/json" \
-                -d '{
-                  "index.lifecycle.name": "observability-3d"
-                }' || true
-
-              echo "Force policy re-evaluation on existing indices (detach and reattach)"
-              # For indices already in a lifecycle phase, changing the policy name alone may not trigger re-evaluation.
-              # Detach (set to null) then reattach (set to observability-3d) to ensure the new policy definition takes effect.
-              # This is necessary when retrofitting ILM onto existing indices created before the policy was established.
-              for stream in logs traces metrics; do
-                curl -fsS "${es_url}/_cat/indices/${stream}-*?h=index&format=json" 2>/dev/null | \
-                  grep -o '"index":"[^"]*"' | sed 's/"index":"//;s/"//' | while read idx; do
-                  # Detach from any existing policy
-                  curl -fsS -X PUT "${es_url}/${idx}/_settings" \
-                    -H "Content-Type: application/json" \
-                    -d '{"index.lifecycle.name": null}' >/dev/null 2>&1
-                  sleep 0.1
-                  # Reattach to observability-3d to trigger re-evaluation with new policy definition
-                  curl -fsS -X PUT "${es_url}/${idx}/_settings" \
-                    -H "Content-Type: application/json" \
-                    -d '{"index.lifecycle.name": "observability-3d"}' >/dev/null 2>&1
-                done || true
-              done
 
               echo "ILM bootstrap complete"
