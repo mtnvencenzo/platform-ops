@@ -6,6 +6,8 @@ This stack deploys Kafka with Schema Registry and Kafka UI in multiple modes usi
 
 Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
+For the full repository overview, see [the root README](../../README.md).
+
 ## Supported Modes
 
 ### KRaft (preferred)
@@ -141,6 +143,10 @@ kubectl -n kafka-platform logs deploy/kafka-ui
 kubectl -n kafka-platform logs deploy/schema-registry
 kubectl -n kafka-platform logs deploy/kafka-broker-1
 ```
+
+## Disclaimer
+
+These manifests and instructions are intended for local development, testing, and homelab usage. They are not production-hardened and should be reviewed and adapted before use in shared or production environments.
 
 ## References
 

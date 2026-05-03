@@ -8,6 +8,8 @@ This stack deploys RabbitMQ with the management UI for local messaging workflows
 
 Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
+For the full repository overview, see [the root README](../../README.md).
+
 ## Deployment Priority
 
 1. Kubernetes via Argo CD + Kustomize (primary)
@@ -87,6 +89,10 @@ kubectl -n rabbitmq-platform get pods,svc,ingress,pvc
 kubectl -n rabbitmq-platform get pods
 kubectl -n rabbitmq-platform logs deploy/rabbitmq
 ```
+
+## Disclaimer
+
+These manifests and instructions are intended for local development, testing, and homelab usage. They are not production-hardened and should be reviewed and adapted before use in shared or production environments.
 
 ## References
 

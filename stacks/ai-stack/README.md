@@ -8,6 +8,8 @@ This stack provides a local AI engineering platform for chat, vector search, and
 
 Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
+For the full repository overview, see [the root README](../../README.md).
+
 ## Deployment Priority
 
 1. Kubernetes via Argo CD + Kustomize (primary)
@@ -123,6 +125,10 @@ kubectl -n ai-platform describe pod <pod-name>
 kubectl -n ai-platform logs deploy/open-webui
 kubectl -n ai-platform logs deploy/qdrant
 ```
+
+## Disclaimer
+
+These manifests and instructions are intended for local development, testing, and homelab usage. They are not production-hardened and should be reviewed and adapted before use in shared or production environments.
 
 ## References
 

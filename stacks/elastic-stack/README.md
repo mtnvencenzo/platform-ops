@@ -8,6 +8,8 @@ This stack deploys Elasticsearch, Kibana, APM Server, and OpenTelemetry Collecto
 
 Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
+For the full repository overview, see [the root README](../../README.md).
+
 ## Deployment Priority
 
 1. Kubernetes via Argo CD + Kustomize (primary)
@@ -87,6 +89,10 @@ kubectl -n elastic-platform logs deploy/elasticsearch
 kubectl -n elastic-platform logs deploy/kibana
 kubectl -n elastic-platform logs deploy/otel-collector
 ```
+
+## Disclaimer
+
+These manifests and instructions are intended for local development, testing, and homelab usage. They are not production-hardened and should be reviewed and adapted before use in shared or production environments.
 
 ## References
 

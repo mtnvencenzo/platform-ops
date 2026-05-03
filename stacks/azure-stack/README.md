@@ -8,6 +8,8 @@ This stack provides Azure service emulators for local development with Kubernete
 
 Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
+For the full repository overview, see [the root README](../../README.md).
+
 ## Deployment Priority
 
 1. Kubernetes via Argo CD + Kustomize (primary)
@@ -104,6 +106,10 @@ kubectl -n azure-platform get pods
 kubectl -n azure-platform describe pod <pod-name>
 kubectl -n azure-platform logs deploy/azurite
 ```
+
+## Disclaimer
+
+These manifests and instructions are intended for local development, testing, and homelab usage. They are not production-hardened and should be reviewed and adapted before use in shared or production environments.
 
 ## References
 
