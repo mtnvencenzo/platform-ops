@@ -1,100 +1,93 @@
-# OpenObserve Stack w/OpenTelemetry Collector
+# OpenObserve Stack - Kubernetes-First Observability Stack
 
-This stack provides a Docker Compose setup for OpenObserve and the OpenTelemetry Collector. It enables you to collect, process, and forward traces, metrics, and logs from your applications to OpenObserve for observability and analysis.
+This stack deploys OpenObserve with OpenTelemetry Collector for local logs, metrics, and traces ingestion.
 
-## 📁 Contents
+## Cluster Setup
 
-- **docker-compose.yml**: Orchestrates OpenObserve and the OpenTelemetry Collector.
-- **otel-collector-config.yml**: Configuration for the OpenTelemetry Collector, specifying receivers, processors, and exporters (to OpenObserve).
-- **README.md**: This documentation file.
+Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
-## ⚙️ Prerequisites
+## Deployment Priority
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
+1. Kubernetes via Argo CD + Kustomize (primary)
 
-## 🚀 Setup & Usage
+## Stack Contents
 
-> This setup is intended for local development and testing. For production, review and adjust security and resource settings.
+- `k8s/`: Kubernetes manifests for OpenObserve + OTEL collector
+- `argocd/openobserve-stack-app.yaml`: Argo CD Application manifest
+- `docker-compose.yml`: Legacy Docker Compose deployment (unmaintained)
+- `otel-collector-config.yml`: Compose OTEL configuration
 
-### 1. Start the OpenObserve stack (Docker Compose):
+## Kubernetes Deployment (Primary)
 
-```bash
-docker compose -f docker-compose.yml up -d
+### Prerequisites
 
-# Or if the containers have already been created
-docker compose -f docker-compose.yml start
-```
+- Kubernetes cluster available
+- Argo CD installed in namespace `argocd`
+- Ingress controller available (Traefik assumed)
 
-This will start OpenObserve and the OpenTelemetry Collector using the provided configuration, grouping the containers under the project name `openobserve-stack`.
+### Option A: Argo CD (recommended)
 
-To bring the stack down:
-
-```bash
-docker compose -f docker-compose.yml down -v
-```
-
-To force a rebuild and deploy of an individual container:
+Using the public GitHub manifest URL:
 
 ```bash
-docker compose up -d --force-recreate --no-deps --build <service_name>
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/openobserve-stack/argocd/openobserve-stack-app.yaml
+
+# Remove Argo CD app + all stack resources
+kubectl delete -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/openobserve-stack/argocd/openobserve-stack-app.yaml
+kubectl delete namespace openobserve-platform
 ```
 
-### 2. Deploy to Kubernetes with Argo CD (GitOps)
+This deploys to namespace `openobserve-platform` and syncs from `stacks/openobserve-stack/k8s`.
 
-If you use Kubernetes and Argo CD, deploy the OpenObserve stack using the provided Argo CD Application manifest:
+### Option B: Direct Kustomize apply
 
-1. Ensure Argo CD is installed in your cluster and you have access to the `argocd` namespace.
-2. Apply the Argo CD Application manifest:
-	 ```bash
-	 kubectl apply -f argocd/openobserve-stack-app.yaml
-	 ```
-	 This will create an Argo CD Application that manages the deployment of OpenObserve. Argo CD will create the required namespace and keep your deployment in sync with the manifests in this repository.
+From repo root:
 
-3. Monitor the deployment in the Argo CD UI or with:
-	 ```bash
-	 kubectl -n argocd get applications
-	 ```
+```bash
+kubectl apply -k stacks/openobserve-stack/k8s
 
-#### Notes
+# Remove resources applied from this kustomization
+kubectl delete -k stacks/openobserve-stack/k8s
+kubectl delete namespace openobserve-platform
+```
 
-- The Kubernetes manifests are in `k8s/` and managed by Kustomize.
-- The Argo CD Application manifest is in `argocd/openobserve-stack-app.yaml`.
+### Verify
 
-### 3. Accessing OpenObserve
+```bash
+kubectl -n openobserve-platform get pods,svc,ingress,pvc
+```
 
-- **Web UI**: http://localhost:5080
-- Default credentials (see `docker-compose.yml`):
-	- Email: admin@example.com
-	- Password: ComplexPassword#123
+### Access Endpoints
 
-> Adjust ports and credentials as needed for your environment.
+- OpenObserve UI: http://openobserve.127.0.0.1.sslip.io
+- OTEL HTTP ingest: http://otel-collector.127.0.0.1.sslip.io
+- OTEL gRPC ingest: `otel-collector.openobserve-platform.svc.cluster.local:4317`
 
-### 4. Send Telemetry Data
+### Default Credentials
 
-- Point your application(s) to the OpenTelemetry Collector endpoint (as defined in `otel-collector-config.yml`):
-	- http://localhost:4317 (outside the compose network)
-	- http://otel-collector:4317 (inside the compose network)
-- The collector will receive, process, and forward telemetry data to OpenObserve.
+- Email: `admin@example.com`
+- Password: `ComplexPassword#123`
 
-**Monitor in OpenObserve:**
-- Log in to the OpenObserve UI to view traces, metrics, and logs.
+## Stack-Specific Notes
 
-## 🛠️ Customization
+- OTEL receiver auth is token-based; clients must send a valid bearer token configured in `k8s/configmap.yml`.
+- Collector forwards telemetry to OpenObserve internal ingest endpoint (`openobserve:5081`).
+- If telemetry is rejected, validate both the bearer token and OpenObserve credentials in `k8s/configmap.yml`.
 
-- Modify `otel-collector-config.yml` to add or remove receivers, processors, or exporters as needed.
-- Refer to the [OpenTelemetry Collector documentation](https://opentelemetry.io/docs/collector/configuration/) and [OpenObserve documentation](https://openobserve.ai/docs/) for advanced configuration.
+## Configuration Notes
 
-## 🐞 Troubleshooting
+- OTEL token auth and exporter settings are defined in `k8s/configmap.yml`.
+- OpenObserve data persists to PVC `openobserve-data` in Kubernetes.
 
-- Check container logs for errors:
-	```bash
-	docker compose -f docker-compose.yml logs
-	```
-- Ensure network connectivity between the collector and OpenObserve.
-- Validate your credentials and endpoint URLs in the configuration file.
+## Troubleshooting
 
----
+```bash
+kubectl -n openobserve-platform get pods
+kubectl -n openobserve-platform logs deploy/openobserve
+kubectl -n openobserve-platform logs deploy/otel-collector
+```
 
-For more information, see the official documentation for [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) and [OpenObserve](https://openobserve.ai/docs/).
+## References
 
----
+- https://openobserve.ai/docs/
+- https://opentelemetry.io/docs/collector/

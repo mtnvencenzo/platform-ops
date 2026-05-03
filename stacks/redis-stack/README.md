@@ -1,93 +1,89 @@
-# Redis Stack
-This stack contains a Docker Compose setup for running Redis locally with RedisInsight for development and testing. It provides a simple, lightweight Redis environment with a web-based management UI.
+# Redis Stack - Kubernetes-First Redis Environment
+
+This stack deploys Redis with RedisInsight for local cache and data-structure workflows.
 
 ![Redis Architecture Diagram](./assets/redis-stack.drawio.svg)
 
-## ⚙️ Prerequisites
+## Cluster Setup
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
+Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
-## 🏗️ Architecture
+## Deployment Priority
 
-This setup provides a local Redis development environment:
+1. Kubernetes via Argo CD + Kustomize (primary)
 
-- **redis** - Redis server with AOF persistence enabled (port 6379)
-- **redis-insight** - RedisInsight web UI for Redis management and monitoring (port 5540)
+## Stack Contents
 
-All containers run within a dedicated `redis-network` bridge network for secure inter-service communication. Data is persisted using Docker volumes for both Redis data and RedisInsight configuration.
+- `k8s/`: Kubernetes manifests for Redis + RedisInsight
+- `argocd/redis-stack-app.yaml`: Argo CD Application manifest
+- `docker-compose.yml`: Legacy Docker Compose deployment (unmaintained)
 
-## 🚀 Setup & Usage
+## Kubernetes Deployment (Primary)
 
-> This setup is geared for local development usage and should not be considered for production without adjustments.
+### Prerequisites
 
-### 1. Start the Redis services:
+- Kubernetes cluster available
+- Argo CD installed in namespace `argocd`
+- Ingress controller available (Traefik assumed)
 
-```bash
-docker compose up -d
+### Option A: Argo CD (recommended)
 
-# Or if the containers have already been created
-docker compose start
-```
-
-This will start Redis and RedisInsight using the provided configuration and create the necessary network and volumes for data persistence.
-
-To bring the compose down, use this command:
+Using the public GitHub manifest URL:
 
 ```bash
-docker compose down -v
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/redis-stack/argocd/redis-stack-app.yaml
+
+# Remove Argo CD app + all stack resources
+kubectl delete -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/redis-stack/argocd/redis-stack-app.yaml
+kubectl delete namespace redis-platform
 ```
 
-To force a rebuild and deploy of an individual container use this command:  
+This deploys to namespace `redis-platform` and syncs from `stacks/redis-stack/k8s`.
+
+### Option B: Direct Kustomize apply
+
+From repo root:
 
 ```bash
-docker compose up -d --force-recreate --no-deps --build <service_name>
+kubectl apply -k stacks/redis-stack/k8s
+
+# Remove resources applied from this kustomization
+kubectl delete -k stacks/redis-stack/k8s
+kubectl delete namespace redis-platform
 ```
 
-### 2. Verify Services are Running:
+### Verify
+
 ```bash
-# Check all services status
-docker compose ps
-
-# Test Redis connection
-docker exec redis redis-cli ping
-
-# Or use redis-cli directly
-redis-cli -h localhost -p 6379 ping
+kubectl -n redis-platform get pods,svc,ingress,pvc
 ```
 
+### Access Endpoints
 
-## 📊 Service Endpoints & Ports
+- RedisInsight UI: http://redis-insight.127.0.0.1.sslip.io
+- Redis service (cluster-internal): `redis.redis-platform.svc.cluster.local:6380`
 
-- **Redis Server**: `localhost:6379` (TCP)
-  - Protocol: Redis Protocol (RESP)
-  - Persistence: AOF (Append-Only File) enabled
-- **RedisInsight**: `localhost:5540` (HTTP)
-  - Web UI for Redis management and monitoring
+## Stack-Specific Notes
 
-## 💾 Data Persistence
+- Redis service port is `6380` in Kubernetes and maps to container port `6379`.
+- RedisInsight is preconfigured to connect to `redis:6380` in this stack.
+- In-cluster clients should target `redis.redis-platform.svc.cluster.local:6380`.
 
-- **Redis Data**: Stored in `vol_redis` Docker volume
-  - AOF persistence enabled with `--appendonly yes`
-  - Data survives container restarts
-- **RedisInsight Data**: Stored in `vol_redis_insight` Docker volume
-  - Preserves database connections and preferences
+## Configuration Notes
 
-## 🐞 Troubleshooting
+- Redis runs with AOF persistence enabled.
+- Kubernetes service exposes Redis as service port `6380` mapped to container port `6379`.
+- Redis and RedisInsight data are persisted to PVCs.
 
-- Check container logs for errors:
-  ```bash
-  docker compose logs
-  
-  # Or for a specific service
-  docker compose logs redis
-  docker compose logs redis-insight
-  ```
-- Ensure no port conflicts with existing services on your machine (especially port 6379 for Redis).
-- Validate that Docker has sufficient resources allocated for all containers.
-- Check that volumes have proper permissions for data persistence.
-- If RedisInsight cannot connect to Redis:
-  - Verify both containers are on the same network: `docker network inspect redis-stack_redis-network`
-  - Check Redis health: `docker exec redis redis-cli ping`
+## Troubleshooting
 
----
-For more information, see the official documentation for [Redis](https://redis.io/docs/) and [RedisInsight](https://redis.io/docs/connect/insight/).
+```bash
+kubectl -n redis-platform get pods
+kubectl -n redis-platform logs deploy/redis
+kubectl -n redis-platform logs deploy/redis-insight
+```
+
+## References
+
+- https://redis.io/docs/
+- https://redis.io/docs/connect/insight/

@@ -1,106 +1,94 @@
-# Elastic Stack w/OpenTelemetry Collector
-This stack contains a common docker compose setup for the Elastic Stack using Elastic Search, Elastic APM, Kibana and an Open Teleemetry Collector.  It provides a quick way to collect, process, and forward traces, metrics, and logs from your applications to an Elastic Stack instance for monitoring and analysis.
+# Elastic Stack - Kubernetes-First Observability Stack
 
-
+This stack deploys Elasticsearch, Kibana, APM Server, and OpenTelemetry Collector for local observability workflows.
 
 ![Elastic Stack Diagram](./assets/elastic-stack.png)
 
+## Cluster Setup
 
-## 📁 Contents
+Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
-- **docker-compse.yml**: Docker Compose file to orchestrate the OpenTelemetry Collector and any supporting services.
-- **otel-collector-config.yml**: Configuration file for the OpenTelemetry Collector, specifying receivers, processors, and exporters (including Elastic).
-- **README.md**: This documentation file.
+## Deployment Priority
 
-## ⚙️ Prerequisites
+1. Kubernetes via Argo CD + Kustomize (primary)
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
+## Stack Contents
 
+- `k8s/`: Kubernetes manifests for Elastic + OTEL collector
+- `argocd/elastic-stack-app.yaml`: Argo CD Application manifest
+- `docker-compose.yml`: Legacy Docker Compose deployment (unmaintained)
+- `otel-collector-config.yml`: Compose OTEL configuration
 
+## Kubernetes Deployment (Primary)
 
-## 🚀 Setup & Usage
+### Prerequisites
 
-> This setup is geared for local development usage and should not be considered for production without adjustments.
+- Kubernetes cluster available
+- Argo CD installed in namespace `argocd`
+- Ingress controller available (Traefik assumed)
 
+### Option A: Argo CD (recommended)
 
-### 1. Start the Elastic ELK stack services (Docker Compose):
+Using the public GitHub manifest URL:
 
 ```bash
-docker compose -f docker-compose.yml up -d
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/elastic-stack/argocd/elastic-stack-app.yaml
 
-# Or if the containers have already been created
-docker compose -f docker-compose.yml start
+# Remove Argo CD app + all stack resources
+kubectl delete -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/elastic-stack/argocd/elastic-stack-app.yaml
+kubectl delete namespace elastic-platform
 ```
 
-This will start the elastic stack and Open Telemetry Collector using the provided configuration and will group the containers under the project name `elastic-stack` in Docker Desktop and the CLI.
+This deploys to namespace `elastic-platform` and syncs from `stacks/elastic-stack/k8s`.
 
-To bring the compose down, use this command:
+### Option B: Direct Kustomize apply
+
+From repo root:
+
 ```bash
-docker compose -f docker-compose.yml down -v
+kubectl apply -k stacks/elastic-stack/k8s
+
+# Remove resources applied from this kustomization
+kubectl delete -k stacks/elastic-stack/k8s
+kubectl delete namespace elastic-platform
 ```
 
-To force a rebuild and deploy of an individual container use this command:
+### Verify
+
 ```bash
-docker compose up -d --force-recreate --no-deps --build <service_name>
+kubectl -n elastic-platform get pods,svc,ingress,pvc
 ```
 
-### 2. Deploy to Kubernetes with Argo CD (GitOps)
+### Access Endpoints
 
-If you are using Kubernetes and Argo CD, you can deploy the Elastic Stack using the provided Argo CD Application manifest:
+- Kibana: http://kibana.127.0.0.1.sslip.io
+- OTEL HTTP ingest: http://otel-collector.127.0.0.1.sslip.io
+- OTEL gRPC ingest: `otel-collector.elastic-platform.svc.cluster.local:4317`
 
-1. Ensure Argo CD is installed in your cluster and you have access to the `argocd` namespace.
-2. Apply the Argo CD Application manifest:
-   ```bash
-   kubectl apply -f argocd/elastic-stack-app.yaml
-   ```
-   This will create an Argo CD Application that manages the deployment of the Elastic Stack to your cluster. Argo CD will automatically create the `elastic-platform` namespace if it does not exist and keep your deployment in sync with the manifests in this repository.
+## Stack-Specific Notes
 
-3. Monitor the deployment in the Argo CD UI or with:
-   ```bash
-   kubectl -n argocd get applications
-   ```
+- On k3d, ensure ingress port mapping is configured for your cluster (for example `8080:80@loadbalancer` if you expose ingress on host port 8080).
+- If you change ingress hostnames or port mappings, update the endpoint URLs accordingly.
+- For cross-namespace telemetry, use:
+	- `otel-collector.elastic-platform.svc.cluster.local:4317` (gRPC)
+	- `otel-collector.elastic-platform.svc.cluster.local:4318` (HTTP)
 
-#### Notes
-- The manifests for the Elastic Stack are located in `k8s/` and are managed by Kustomize.
-- The Argo CD Application manifest is located in `argocd/elastic-stack-app.yaml`.
+## Configuration Notes
 
+- Current manifests run Elasticsearch and Kibana with security disabled for local usage.
+- OTEL receiver tokens and pipeline settings are in `k8s/configmap.yml`.
+- Elasticsearch needs enough host memory; monitor pod scheduling if startup is slow.
 
-### 3. Accessing Kibana in Kubernetes (Ingress)
+## Troubleshooting
 
-When deploying with Argo CD or directly to Kubernetes, Kibana is exposed via a Kubernetes Ingress at:
+```bash
+kubectl -n elastic-platform get pods
+kubectl -n elastic-platform logs deploy/elasticsearch
+kubectl -n elastic-platform logs deploy/kibana
+kubectl -n elastic-platform logs deploy/otel-collector
+```
 
-- **Kibana**: http://kibana.127.0.0.1.sslip.io:8080
+## References
 
-> **Note:**
-> For k3d, ensure your cluster is created with the appropriate port mapping, e.g. `k3d cluster create --port "8080:80@loadbalancer"`, so that traffic to port 8080 on your host is forwarded to the cluster's ingress controller. Adjust the port as needed if you use a different mapping.
-
-> If you change the Ingress host or port, update the URL accordingly.
-
----
-
-### 4. Send Telemetry Data
-
-- Point your application(s) to the Open Telemetry Collector endpoint (as defined in `otel-collector-config.yml`).
-  - http://localhost:4317 (when outside the compose network)
-  - http://otel-collector:4317 (when inside the compose network)
-- The collector will receive, process, and forward telemetry data to your Elastic APM instance.
-
-**Monitor in Kibana:**
-- Log in to your Elastic Observability Kibana dashboard to view traces, metrics, and logs. http://localhost:5601
-
-## 🛠️ Customization
-
-- Modify `otel-collector-config.yml` to add or remove receivers, processors, or exporters as needed for your environment.
-- Refer to the [OpenTelemetry Collector documentation](https://opentelemetry.io/docs/collector/configuration/) for advanced configuration options.
-
-## 🐞 Troubleshooting
-
-- Check container logs for errors:
-  ```bash
-	docker compose -f docker-compose.yml logs
-  ```
-- Ensure network connectivity between the collector and your Elastic instance.
-- Validate your credentials and endpoint URLs in the configuration file.
-
----
-For more information, see the official documentation for [OpenTelemetry Collector](https://opentelemetry.io/docs/collector/) and [Elastic Observability](https://www.elastic.co/guide/en/observability/current/index.html).
+- https://www.elastic.co/guide/en/observability/current/index.html
+- https://opentelemetry.io/docs/collector/

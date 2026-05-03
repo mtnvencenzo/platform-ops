@@ -1,160 +1,132 @@
-# AI Stack - Local AI Engineering Environment
+# AI Stack - Kubernetes-First AI Engineering Environment
 
-This stack provides a Docker Compose setup for running a modern local AI engineering environment. It focuses on the most in-demand skills: LLMs, RAG, vector databases, embeddings, and experiment tracking.
+This stack provides a local AI engineering platform for chat, vector search, and embeddings workflows.
 
 ![AI Stack](./assets/ai-stack.drawio.svg)
 
-## 📁 Contents
+## Cluster Setup
 
-- `docker-compose.yml`: Docker Compose configuration for AI services
-- `.env.example`: Default environment variables (ports, model IDs, tokens)
-- `README.md`: This documentation file
+Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
-## ⚙️ Prerequisites
+## Deployment Priority
 
-- Docker 24+ and Docker Compose v2
-- Optional GPU: NVIDIA drivers + NVIDIA Container Toolkit (for Ollama GPU acceleration)
+1. Kubernetes via Argo CD + Kustomize (primary)
 
-## 🏗️ Architecture
+## Stack Contents
 
-The stack provides the following services:
+- `k8s/`: Kubernetes manifests (Kustomize base for the stack)
+- `argocd/ai-stack-app.yaml`: Argo CD Application manifest
+- `docker-compose.yml`: Legacy Docker Compose deployment (unmaintained)
+- `docker-compose-langfuse.yml`: Legacy optional Langfuse compose deployment (unmaintained)
 
-- **Open WebUI**: Chat UI for local models (Ollama)
-- **Ollama**: Local LLM runtime (CPU/GPU) for rapid iteration
-- **Qdrant**: Vector database for RAG and semantic search
-- **Text Embeddings Inference (Hugging Face)**: High-performance embeddings server (e.g., sentence-transformers/all-mpnet-base-v2)
-- **Langfuse**: Separate docker compose setup for running Langfuse locally
+## Kubernetes Deployment (Primary)
 
-### Service Dependencies
+### Prerequisites
 
-- Open WebUI depends on Ollama (for local models).
-- Other services are independent but commonly used together for RAG/experimentation.
+- A running Kubernetes cluster (k3d/k3s works well)
+- Argo CD installed in namespace `argocd` (for GitOps flow)
+- Ingress controller available (Traefik is assumed in manifests)
 
-## 🚀 Setup & Usage
+### Option A: Argo CD (recommended)
 
-> This setup is designed for local development and learning. Do not use in production environments.
+Using the public GitHub manifest URL:
 
-1. Initialize environment variables and start the services
-
-   ```bash
-   # Build up compose
-   docker compose -f docker-compose.yml up -d
-
-   # Or if the containers have already been created
-   docker compose -f docker-compose.yml start
-
-   # Optional langfuse observability 
-   docker compose -f docker-compose-langfuse.yml up -d
-   docker compose -f docker-compose-langfuse.yml start
-
-   ```
-
-2. **Stop the services:**
-    ```bash
-    # Tear down and remove the volumes
-    docker compose -f docker-compose.yml down -v
-
-    # Optional langfuse observability 
-    docker compose -f docker-compose-langfuse.yml down -v
-    ```
-
-3. **Rebuild and restart a specific service:**
-    ```bash
-    docker compose -f docker-compose.yml up -d --force-recreate --no-deps --build <service_name>
-
-    # Optional langfuse observability 
-    docker compose -f docker-compose-langfuse.yml up -d --force-recreate --no-deps --build <service_name>
-    ```
-
-4. **Check all services status:**
-    ```bash
-    docker compose ps
-    ```
-
-5. **Load a local model in Ollama (first run downloads):**
-
-   ```bash
-   docker compose exec ollama ollama pull qwen3:8b
-   docker compose exec ollama ollama run qwen3:8b "Hello"
-   ```
-
-## 🛠️ Customization
-
-- Modify `docker-compose.yml` to adjust service settings, ports, or profiles
-- Update `.env` for ports, model IDs, tokens (e.g., `HF_TOKEN`)
-
-
-## 📊 Service Endpoints & Ports
-
-### Open WebUI
-Modern chat UI for interacting with local LLMs (Ollama) and managing conversations. Supports model switching and prompt history. Currently configured in the compose file to talk to Ollama.
-
-**Docs:** [Open WebUI GitHub](https://github.com/open-webui/open-webui)  
-**UI:** [http://localhost:3000](http://localhost:3000)
-
----
-
-### Ollama (Local LLMs)
-Local LLM runtime for running, managing, and serving open-source models. Supports both CPU and GPU. 
-
-**Docs** [Ollama Docs](https://ollama.com)  
-**API:** [http://localhost:11434](http://localhost:11434)
-**GPU Support:** [Setup with docker](https://github.com/mtnvencenzo/bash/blob/main/docker/gpu.sh)
-
-#### Host machine install
 ```bash
-# to install ollama on the host machine and make it available from
-# docker containers (via host.docker.internal)
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/ai-stack/argocd/ai-stack-app.yaml
+
+# Remove Argo CD app + all stack resources
+kubectl delete -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/ai-stack/argocd/ai-stack-app.yaml
+kubectl delete namespace ai-platform
+```
+
+This deploys to namespace `ai-platform` and syncs from `stacks/ai-stack/k8s`.
+
+### Option B: Direct Kustomize apply
+
+From repo root:
+
+```bash
+kubectl apply -k stacks/ai-stack/k8s
+
+# Remove resources applied from this kustomization
+kubectl delete -k stacks/ai-stack/k8s
+kubectl delete namespace ai-platform
+```
+
+### Verify
+
+```bash
+kubectl -n ai-platform get pods,svc,ingress,pvc
+```
+
+### Access Endpoints
+
+- Open WebUI: http://open-webui.127.0.0.1.sslip.io
+- Qdrant: http://qdrant.127.0.0.1.sslip.io
+
+### Important Notes
+
+- The default Kustomize resources enable Open WebUI + Qdrant with host Ollama service.
+- TEI and in-cluster Ollama manifests are present but commented out in `k8s/kustomization.yaml`.
+- `k8s/ollama-host-service.yml` points to `172.18.0.1:11434`; update this if your host network differs.
+
+## Stack-Specific Notes
+
+### Host Ollama Setup (required for current default manifests)
+
+```bash
+# Install Ollama on the host
 curl -fsSL https://ollama.com/install.sh | sh
 
-# By default, Ollama only listens on 127.0.0.1 (localhost) for security reasons. You need to create a systemd override file to change this behavior so that it runs on a non-loopback address so it can be accessible from containers running on non-host networks
+# Make Ollama listen on a non-loopback interface
 sudo systemctl edit ollama.service
 
-# Add the following lines to the file to set the OLLAMA_HOST variable to 0.0.0.0
+# Add this to the override file:
 [Service]
 Environment="OLLAMA_HOST=0.0.0.0"
 
-# Restart and verify the service
+# Reload and restart
 sudo systemctl daemon-reload
 sudo systemctl restart ollama.service
 
-# Verify - You should see output indicating that it is listening on *:11434 or 0.0.0.0:11434, instead of 127.0.0.1:11434
+# Verify Ollama is listening on 0.0.0.0 or *:11434
 sudo ss -antp | grep 11434
+```
 
-# If ufw is enabled, allow the k3d pod network to reach Ollama on the host.
-# The 172.18.0.0/16 subnet is the fixed k3d network created in INSTALL_K3D.md (best to verify this).
+### Network + Firewall
+
+```bash
+# Verify the k3d Docker network gateway matches the EndpointSlice target
+docker network inspect k3d-prd-local-apps-001 --format '{{(index .IPAM.Config 0).Gateway}}'
+
+# If UFW is enabled, allow k3d pod traffic to host Ollama
 sudo ufw allow from 172.18.0.0/16 to any port 11434 comment 'k3d pods -> host ollama'
 ```
 
----
+### TEI GPU Compatibility
 
-### Qdrant (Vector DB)
-High-performance vector database for semantic search, RAG, and similarity queries. Stores embeddings and metadata.
+- TEI runs in CPU mode by default for Radeon-based local setups.
+- ROCm TEI currently supports AMD Instinct accelerators (MI200/MI300), not typical RDNA consumer cards.
+- If switching to NVIDIA, follow the commented instructions in the TEI manifests for `runtimeClassName`, GPU resources, and image tags.
 
-**Docs:** [Qdrant Docs](https://qdrant.tech/documentation)  
-**REST API:** [http://localhost:6333](http://localhost:6333)  
-**gRPC:** [http://localhost:6334](http://localhost:6334)
+## Configuration Notes
 
----
+- Main runtime config and secrets are defined in `k8s/configmap.yml`.
+- Replace `HF_TOKEN` before enabling TEI workloads that require gated model pulls.
+- If running Ollama on the host, ensure it listens on a non-loopback address.
 
-### Embeddings (Text Embeddings Inference)
-Fast, production-grade embeddings server for generating vector representations from text using Hugging Face models.
+## Troubleshooting
 
-**Docs:** [Hugging Face TEI](https://github.com/huggingface/text-embeddings-inference)  
-**API:** [http://localhost:8989](http://localhost:8989)  
-**Model:** Configured via `TEI_MODEL_ID` in `.env` (defaults to `sentence-transformers/all-mpnet-base-v2`)
+```bash
+kubectl -n ai-platform get pods
+kubectl -n ai-platform describe pod <pod-name>
+kubectl -n ai-platform logs deploy/open-webui
+kubectl -n ai-platform logs deploy/qdrant
+```
 
----
+## References
 
-
-## ⚙️ Configuration Insights
-
-### Startup Dependencies
-- Open WebUI waits for Ollama and Open WebUI can be veery slow to start the first time.  *Just wait for it...*
-- Health checks are defined for core services (Ollama, Qdrant, TEI)
-
-### Port Configuration
-- Most endpoints use standard ports; override any port in `.env`
-
----
-For more information, see the official documentation for [Open WebUI](https://docs.openwebui.com/), [Ollama](https://ollama.com/), [Qdrant](https://qdrant.tech/documentation/), [Text Embeddings Inference](https://huggingface.co/docs/text-embeddings-inference/), and [Langfuse](https://langfuse.com/docs).
+- https://docs.openwebui.com/
+- https://ollama.com/
+- https://qdrant.tech/documentation/
+- https://huggingface.co/docs/text-embeddings-inference/

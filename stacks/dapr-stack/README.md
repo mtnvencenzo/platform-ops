@@ -1,94 +1,89 @@
-# Dapr Self-Hosted Setup
-This stack contains a Docker Compose setup for running Dapr in self-hosted mode, providing all the necessary runtime services exactly as created by the `dapr init` CLI command. It offers a quick way to get a complete Dapr runtime environment for local development and testing of distributed applications.
+# Dapr Stack - Kubernetes-First Self-Hosted Runtime
+
+This stack deploys core Dapr self-hosted runtime services for local development on Kubernetes.
 
 ![Dapr Architecture Diagram](./assets/dapr-stack.drawio.svg)
 
+## Cluster Setup
 
-## ⚙️ Prerequisites
+Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
+## Deployment Priority
 
-## 🏗️ Architecture
+1. Kubernetes via Argo CD + Kustomize (primary)
 
-This setup provides the complete Dapr self-hosted runtime environment:
+## Stack Contents
 
-- **dapr_placement** - Dapr placement service for actor placement (port 50005)
-- **dapr_scheduler** - Dapr scheduler service for reliable scheduling (port 50006)  
+- `k8s/`: Kubernetes manifests for placement and scheduler
+- `argocd/dapr-stack-app.yaml`: Argo CD Application manifest
+- `docker-compose.yml`: Legacy Docker Compose deployment (unmaintained)
 
-All containers run within a dedicated `dapr-network` bridge network for secure inter-service communication.
+## Kubernetes Deployment (Primary)
 
-## 🚀 Setup & Usage
+### Prerequisites
 
-> This setup is geared for local development usage and should not be considered for production without adjustments.
+- Kubernetes cluster available
+- Argo CD installed in namespace `argocd`
 
-### 1. Start the Dapr runtime services:
+### Option A: Argo CD (recommended)
 
-	```bash
-    docker compose -f docker-compose.yml up -d
+Using the public GitHub manifest URL:
 
-    # Or if the containers have already been created
-    docker compose -f docker-compose.yml start
+```bash
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/dapr-stack/argocd/dapr-stack-app.yaml
 
-	```
+# Remove Argo CD app + all stack resources
+kubectl delete -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/dapr-stack/argocd/dapr-stack-app.yaml
+kubectl delete namespace dapr-platform
+```
 
-	This will start all Dapr runtime services using the provided configuration and create the necessary network and volumes for data persistence.
+This deploys to namespace `dapr-platform` and syncs from `stacks/dapr-stack/k8s`.
 
-	To bring the compose down, use this command:
+### Option B: Direct Kustomize apply
 
-	```bash
-	docker compose -f docker-compose.yml down -v
-	```
+From repo root:
 
-	To force a rebuild and deploy of an individual container use this command:  
+```bash
+kubectl apply -k stacks/dapr-stack/k8s
 
-	```bash
-	docker compose -f docker-compose.yml up -d --force-recreate --no-deps --build <service_name>
-	```
+# Remove resources applied from this kustomization
+kubectl delete -k stacks/dapr-stack/k8s
+kubectl delete namespace dapr-platform
+```
 
-### 2. Verify Services are Running:
-	```bash
-	# Check all services status
-	docker compose ps
-	
-	# Check health endpoints
-	curl http://localhost:58080/healthz  # Placement service
-	curl http://localhost:58081/healthz  # Scheduler service
-	```
+### Verify
 
-### 3. Use with Your Dapr Applications:
-	- Your Dapr applications will automatically connect to these services when running with `dapr run`
-	- The placement service handles actor placement at `localhost:50005`
-	- The scheduler service provides reliable scheduling at `localhost:50006`
+```bash
+kubectl -n dapr-platform get pods,svc,pvc
+```
 
-## 🛠️ Customization
+### Runtime Endpoints
 
-- Modify `docker-compose.yml` to adjust service configurations, ports, or resource limits as needed for your environment.
-- Refer to the [Dapr documentation](https://docs.dapr.io/) for advanced configuration options and component setup.
+- Dapr placement service (ClusterIP): `dapr-placement.dapr-platform.svc.cluster.local:50005`
+- Dapr scheduler service (ClusterIP): `dapr-scheduler.dapr-platform.svc.cluster.local:50006`
+- Dapr scheduler NodePort: `localhost:30006` (maps to scheduler `50006`)
 
-## 📊 Service Endpoints & Ports
+## Stack-Specific Notes
 
-### Core Services
-- **Placement Service**: `localhost:50005` (gRPC)
-  - Health Check: `localhost:58080/healthz`
-  - Metrics: `localhost:59090/metrics`
-- **Scheduler Service**: `localhost:50006` (gRPC)
-  - Health Check: `localhost:58081/healthz` 
-  - Metrics: `localhost:59091/metrics`
-  - etcd Client: `localhost:52379`
+- These manifests are intended for local self-hosted parity.
+- For production Kubernetes deployments, prefer the official Dapr Helm chart.
+- If workloads run in-cluster, use ClusterIP DNS endpoints.
+- If workloads run outside the cluster, use scheduler NodePort `30006`.
 
-## 🐞 Troubleshooting
+## Configuration Notes
 
-- Check container logs for errors:
-  ```bash
-  docker compose logs
-  
-  # Or for a specific service
-  docker compose logs dapr_placement
-  docker compose logs dapr_scheduler
-  ```
-- Ensure no port conflicts with existing services on your machine.
-- Validate that Docker has sufficient resources allocated for all containers.
-- Check that volumes have proper permissions for data persistence.
+- Scheduler persistence uses PVC `dapr-scheduler-data`.
+- If your applications run outside the cluster, use the exposed scheduler NodePort.
 
----
-For more information, see the official documentation for [Dapr](https://docs.dapr.io/) and [Dapr Self-Hosted Mode](https://docs.dapr.io/operations/hosting/self-hosted/).
+## Troubleshooting
+
+```bash
+kubectl -n dapr-platform get pods
+kubectl -n dapr-platform logs deploy/dapr-placement
+kubectl -n dapr-platform logs deploy/dapr-scheduler
+```
+
+## References
+
+- https://docs.dapr.io/
+- https://docs.dapr.io/operations/hosting/self-hosted/

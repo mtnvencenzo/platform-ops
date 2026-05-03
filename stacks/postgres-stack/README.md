@@ -1,155 +1,114 @@
-# Postgres Stack
-This stack contains a Docker Compose setup for running PostgreSQL locally with pgAdmin for development and testing. It provides a simple, production-ready PostgreSQL environment with a web-based management UI.
+# Postgres Stack - Kubernetes-First PostgreSQL Environment
+
+This stack deploys PostgreSQL with pgAdmin for local development and operations workflows.
 
 ![Postgres Architecture Diagram](./assets/postgres-stack.drawio.svg)
 
-## ⚙️ Prerequisites
+## Cluster Setup
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/) installed on your machine.
+Set up the base k3d/k3s cluster first using [the main cluster setup guide](../../INSTALL.md).
 
-## 🏗️ Architecture
+## Deployment Priority
 
-This setup provides a local PostgreSQL development environment:
+1. Kubernetes via Argo CD + Kustomize (primary)
 
-- **postgres** - PostgreSQL 16 database server (port 5432)
-- **pgadmin** - pgAdmin 4 web UI for PostgreSQL management and monitoring (port 5050)
+## Stack Contents
 
-All containers run within a dedicated `app-internal-network` bridge network for secure inter-service communication. Data is persisted using Docker volumes for both PostgreSQL data and pgAdmin configuration.
+- `k8s/`: Kubernetes manifests for Postgres + pgAdmin
+- `argocd/postgres-stack-app.yaml`: Argo CD Application manifest
+- `docker-compose.yml`: Legacy Docker Compose deployment (unmaintained)
 
-## 🚀 Setup & Usage
+## Kubernetes Deployment (Primary)
 
-> This setup is geared for local development usage and should not be considered for production without adjustments.
+### Prerequisites
 
-### 1. Create the external network:
+- Kubernetes cluster available
+- Argo CD installed in namespace `argocd`
+- Ingress controller available (Traefik assumed)
 
-If you haven't already created the `app-internal-network` network for other stacks, create it first:
+### Option A: Argo CD (recommended)
 
-```bash
-docker network create app-internal-network
-```
-
-### 2. Start the PostgreSQL services:
-
-```bash
-docker compose up -d
-
-# Or if the containers have already been created
-docker compose start
-```
-
-This will start PostgreSQL and pgAdmin using the provided configuration and create the necessary network and volumes for data persistence.
-
-To bring the compose down, use this command:
+Using the public GitHub manifest URL:
 
 ```bash
-docker compose down -v
+kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/postgres-stack/argocd/postgres-stack-app.yaml
+
+# Remove Argo CD app + all stack resources
+kubectl delete -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/postgres-stack/argocd/postgres-stack-app.yaml
+kubectl delete namespace postgres-platform
 ```
 
-To force a rebuild and deploy of an individual container use this command:  
+This deploys to namespace `postgres-platform` and syncs from `stacks/postgres-stack/k8s`.
+
+### Option B: Direct Kustomize apply
+
+From repo root:
 
 ```bash
-docker compose up -d --force-recreate --no-deps --build <service_name>
+kubectl apply -k stacks/postgres-stack/k8s
+
+# Remove resources applied from this kustomization
+kubectl delete -k stacks/postgres-stack/k8s
+kubectl delete namespace postgres-platform
 ```
 
-### 3. Verify Services are Running:
+### Verify
+
 ```bash
-# Check all services status
-docker compose ps
-
-# Test PostgreSQL connection
-docker exec postgres pg_isready -U admin -d postgres
-
-# Or use psql directly
-psql -h localhost -p 5432 -U admin -d postgres
+kubectl -n postgres-platform get pods,svc,ingress,pvc
 ```
 
-## 📊 Service Endpoints & Ports
+### Access Endpoints
 
-- **PostgreSQL Server**: `localhost:5432` (TCP)
-  - Protocol: PostgreSQL Protocol
-  - Default Database: `postgres`
-  - Default User: `admin`
-  - Default Password: `password`
-  - Data persistence enabled
-- **pgAdmin**: `http://localhost:5050` (HTTP)
-  - Web UI for PostgreSQL management and monitoring
-  - Default Email: `admin@admin.com`
-  - Default Password: `password`
+- pgAdmin UI: http://pgadmin.127.0.0.1.sslip.io
+- PostgreSQL NodePort: `localhost:30432`
 
-## 💾 Data Persistence
+### Default Credentials
 
-- **PostgreSQL Data**: Stored in `vol_postgres` Docker volume
-  - All database data persists across container restarts
-  - Located at `/var/lib/postgresql/data` inside the container
-- **pgAdmin Data**: Stored in `vol_pgadmin` Docker volume
-  - Preserves server connections, preferences, and settings
+- PostgreSQL: `admin` / `password` (database: `postgres`)
+- pgAdmin: `admin@admin.com` / `password`
 
-## 🔌 Connecting to PostgreSQL
+### Quick Connection Examples
 
-### From pgAdmin
-1. Open `http://localhost:5050` in your browser
-2. Login with credentials: `admin@admin.com` / `password`
-3. Right-click "Servers" → "Register" → "Server"
-4. Under "General" tab: Name = `Local PostgreSQL`
-5. Under "Connection" tab:
-   - Host: `postgres` (container name within Docker network)
-   - Port: `5432`
-   - Username: `admin`
-   - Password: `password`
-   - Save password: ✓
-
-### From Command Line
 ```bash
-# Using psql
-psql -h localhost -p 5432 -U admin -d postgres
-
-# Using docker exec
-docker exec -it postgres psql -U admin -d postgres
+# psql via NodePort
+psql -h localhost -p 30432 -U admin -d postgres
 ```
 
-### From Application
+Connection string:
+
+```text
+postgresql://admin:password@localhost:30432/postgres
+```
+
+## Stack-Specific Notes
+
+- Known issue: some clients may hit `no pg_hba.conf entry` errors in local setups.
+- Local recovery flow from within the Postgres pod:
+
 ```bash
-# Connection String
-postgresql://admin:password@localhost:5432/postgres
-
-# Or with explicit parameters
-Host: localhost
-Port: 5432
-Database: postgres
-Username: admin
-Password: password
+echo "host all all 0.0.0.0/0 trust" >> /var/lib/postgresql/data/pg_hba.conf
+psql -U admin -d postgres -c "SELECT pg_reload_conf();"
+psql -U admin -d postgres -c "SELECT line_number, type, address, auth_method, error FROM pg_hba_file_rules ORDER BY line_number DESC LIMIT 1;"
 ```
 
-## 🐞 Troubleshooting
+- Use permissive `trust` auth only for local development.
 
-- Check container logs for errors:
-  ```bash
-  docker compose logs
-  
-  # Or for a specific service
-  docker compose logs postgres
-  docker compose logs pgadmin
-  ```
-- Ensure no port conflicts with existing services on your machine (especially port 5432 for PostgreSQL).
-- Validate that Docker has sufficient resources allocated for all containers.
-- Check that volumes have proper permissions for data persistence.
-- If pgAdmin cannot connect to PostgreSQL:
-  - Verify both containers are on the same network: `docker network inspect app-internal-network`
-  - Check PostgreSQL health: `docker exec postgres pg_isready -U admin -d postgres`
-  - Use container name `postgres` as the host in pgAdmin, not `localhost`
-- If the external network doesn't exist:
-  - Create it manually: `docker network create app-internal-network`
+## Configuration Notes
 
-## 🔐 Security Notes
+- Credentials are currently defined in `k8s/configmap.yml` (includes a Secret manifest).
+- PostgreSQL persistence uses PVC `postgres-data`.
+- pgAdmin persistence uses PVC `pgadmin-data`.
 
-⚠️ **Important**: The default credentials (`admin` / `password`) are for local development only. 
+## Troubleshooting
 
-For production use:
-- Change default credentials using environment variables in `docker-compose.yml`
-- Use secrets management for sensitive data
-- Enable SSL/TLS connections
-- Implement proper network security and firewall rules
-- Regularly update PostgreSQL and pgAdmin images
+```bash
+kubectl -n postgres-platform get pods
+kubectl -n postgres-platform logs deploy/postgres
+kubectl -n postgres-platform logs deploy/pgadmin
+```
 
----
-For more information, see the official documentation for [PostgreSQL](https://www.postgresql.org/docs/) and [pgAdmin](https://www.pgadmin.org/docs/).
+## References
+
+- https://www.postgresql.org/docs/
+- https://www.pgadmin.org/docs/
