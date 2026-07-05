@@ -1,4 +1,6 @@
 configs:
+  cm:
+    exec.enabled: true
   rbac:
     policy.default: "role:readonly"
     policy.matchMode: glob
@@ -6,3 +8,4 @@ configs:
     policy.csv: |
       p, role:readonly, logs, get, */*, allow
       p, role:admin, logs, get, */*, allow
+      p, role:admin, exec, create, */*, allow
