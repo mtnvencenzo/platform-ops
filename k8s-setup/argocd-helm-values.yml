@@ -1,6 +1,13 @@
 configs:
   cm:
     exec.enabled: true
+    timeout.reconciliation: 120s
+    timeout.reconciliation.jitter: 60s
+  params:
+    server.insecure: "true"
+    controller.status.processors: "30"
+    controller.operation.processors: "15"
+    repo.server.timeout.seconds: "120"
   rbac:
     policy.default: "role:readonly"
     policy.matchMode: glob
@@ -9,3 +16,48 @@ configs:
       p, role:readonly, logs, get, */*, allow
       p, role:admin, logs, get, */*, allow
       p, role:admin, exec, create, */*, allow
+
+controller:
+  resources:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+repoServer:
+  resources:
+    requests:
+      cpu: 300m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+server:
+  resources:
+    requests:
+      cpu: 150m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+redis:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+
+applicationSet:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi

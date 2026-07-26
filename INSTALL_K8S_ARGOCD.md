@@ -22,7 +22,7 @@ helm repo update
 
 ### Step 2: Install Argo CD
 Create a dedicated namespace and install the chart. Since this is a local k3d environment, you can use the non-HA (High Availability) version to save resources.
-The `argocd-helm-values.yml` file contains cluster-wide configuration such as RBAC policies.
+The `argocd-helm-values.yml` file contains cluster-wide configuration such as RBAC policies, reconciliation cadence, processor tuning, and resource requests/limits for core Argo CD components.
 
 ``` shell
 helm install argocd argo/argo-cd \
@@ -51,7 +51,29 @@ kubectl get pods -n argocd
 
 _Note: Run `helm list -n argocd` to check the currently installed chart version before upgrading._
 
+### Apply The ArgoCD Sync Reliability Fix To An Existing Cluster (No Rebuild)
+If your cluster is already running and you want the reconciliation/resource settings immediately, run this upgrade now:
+
+``` shell
+helm upgrade argocd argo/argo-cd \
+  --namespace argocd \
+  -f ./k8s-setup/argocd-helm-values.yml \
+  --reuse-values \
+  --version 9.4.7
+
+# wait for control plane to settle
+kubectl -n argocd rollout status deploy/argocd-repo-server --timeout=5m
+kubectl -n argocd rollout status statefulset/argocd-application-controller --timeout=5m
+
+# verify settings landed
+kubectl -n argocd get cm argocd-cm -o jsonpath='{.data.timeout\.reconciliation}{"\n"}{.data.timeout\.reconciliation\.jitter}{"\n"}'
+kubectl -n argocd get cm argocd-cmd-params-cm -o jsonpath='{.data.controller\.status\.processors}{"\n"}{.data.controller\.operation\.processors}{"\n"}{.data.repo\.server\.timeout\.seconds}{"\n"}'
+```
+
 ### Step 3: Allow insecure connections to Argo CD
+This is already configured in `argocd-helm-values.yml` (`configs.params.server.insecure: "true"`).
+Use the patch command only if you intentionally remove that value or need a temporary override:
+
 ``` shell
 kubectl patch cm argocd-cmd-params-cm -n argocd -p '{"data": {"server.insecure": "true"}}'
 kubectl rollout restart deployment argocd-server -n argocd

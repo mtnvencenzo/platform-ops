@@ -38,6 +38,7 @@ kubectl apply -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs
 
 # Remove Argo CD app + all stack resources
 kubectl delete -f https://raw.githubusercontent.com/mtnvencenzo/platform-ops/refs/heads/main/stacks/azure-stack/argocd/azure-stack-app.yaml
+
 kubectl delete namespace azure-platform
 ```
 
