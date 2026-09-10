@@ -18,14 +18,14 @@ k3d cluster delete prd-local-apps-001 || true
 sudo systemctl restart docker.service
 
 # Setup a d1rectory for k3d data for better performance
-sudo rm -rf /mnt/data/k3d-node-data
-sudo mkdir -p /mnt/data/k3d-node-data
-sudo chmod -R 777 /mnt/data/k3d-node-data
+sudo rm -rf /mnt/dev-storage/k3d-node-data
+sudo mkdir -p /mnt/dev-storage/k3d-node-data
+sudo chmod -R 777 /mnt/dev-storage/k3d-node-data
 
 # Setup a d1rectory for k3d application data.  this will be mounted for any pod to use
-sudo rm -rf /mnt/data/k3d-app-data
-sudo mkdir -p /mnt/data/k3d-app-data
-sudo chmod -R 777 /mnt/data/k3d-app-data
+sudo rm -rf /mnt/dev-storage/k3d-app-data
+sudo mkdir -p /mnt/dev-storage/k3d-app-data
+sudo chmod -R 777 /mnt/dev-storage/k3d-app-data
 
 # Pre-create the k3d network with a fixed subnet so the gateway IP (172.18.0.1) is deterministic.
 # This ensures k8s Endpoints resources that reference the host (e.g. ollama-host-service) remain stable across cluster rebuilds.
@@ -49,18 +49,19 @@ k3d cluster create prd-local-apps-001 \
   -p "30093:30093@loadbalancer" \
   -p "30095:30095@loadbalancer" \
   -p "30432:30432@loadbalancer" \
-  --volume "/mnt/data/k3d-node-data:/var/lib/rancher/k3s/storage@all" \
-  --volume "/mnt/data/k3d-app-data:/pods@all" \
+  --volume "/mnt/dev-storage/k3d-node-data:/var/lib/rancher/k3s/storage@all" \
+  --volume "/mnt/dev-storage/k3d-app-data:/pods@all" \
   --volume "/dev/kfd:/dev/kfd@all" \
   --volume "/dev/dri:/dev/dri@all" \
   --k3s-arg "max-pods=200@server:*;agent:*" \
-  --api-port 6443 \
+  --api-port 127.0.0.1:6443 \
   --servers 1 \
   --agents 2 \
   --agents-memory 12G \
   --runtime-label "com.k3d.io.ulimit.nofile=65536:65536@server:*;agent:*" \
   --k3s-arg "--disable=metrics-server@server:0" \
   --k3s-arg "--kubelet-arg=eviction-hard=memory.available<256Mi,nodefs.available<5%@agent:*"
+
 
 # To add more ports to the lb (adding node ports is not enough, need to tell the cluster lb to map the ports as well)
 # k3d cluster edit prd-local-apps-001 --port-add 30095:30095@loadbalancer
@@ -84,8 +85,8 @@ k3d cluster create prd-local-apps-001 \
   -p "30672:30672@loadbalancer" \
   -p "30092:30092@loadbalancer" \
   -p "30432:30432@loadbalancer" \
-  --volume "/mnt/data/k3d-node-data:/var/lib/rancher/k3s/storage@all" \
-  --volume "/mnt/data/k3d-app-data:/pods@all" \
+  --volume "/mnt/dev-storage/k3d-node-data:/var/lib/rancher/k3s/storage@all" \
+  --volume "/mnt/dev-storage/k3d-app-data:/pods@all" \
   --k3s-arg "max-pods=200@server:*;agent:*" \
   --api-port 6443 \
   --servers 1 \

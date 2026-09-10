@@ -37,6 +37,8 @@ docker exec -it k3d-prd-local-apps-001-agent-0 cat /sys/class/kfd/kfd/topology/n
 If the topology read fails with a permission error, the cgroup v2 device filter is blocking access. Apply device cgroup rules to each K3d node container:
 
 ```bash
+# Only if previous fails
+# ---
 # Allow access to renderD* devices (major 226) and kfd (major 236)
 for cid in $(docker ps -q --filter "label=app=k3d"); do
   docker update --device-cgroup-rule='c 226:* rwm' --device-cgroup-rule='c 236:* rwm' "$cid"
@@ -71,7 +73,7 @@ The device ordering should match what you see on the host with `rocm-smi`. The t
 The [AMD k8s device plugin](https://github.com/ROCm/k8s-device-plugin) registers `amd.com/gpu` resources on nodes where AMD GPUs are detected:
 
 ```bash
-kubectl create -f https://raw.githubusercontent.com/ROCm/k8s-device-plugin/master/k8s-ds-amdgpu-dp.yaml
+kubectl create -f https://raw.githubusercontent.com/ROCm/k8s-device-plugin/master/k8s-ds-amdgpu-dp.yaml --validate=false
 ```
 
 Wait for the DaemonSet pods to be ready:
@@ -101,7 +103,7 @@ kubectl apply -f k8s-setup/rocm-test.yml
 Check the output:
 
 ```bash
-kubectl wait --for=condition=ready pod/gpu-test-rocm --timeout=120s || true
+kubectl wait --for=condition=ready pod/gpu-test-rocm --timeout=900s || true
 kubectl logs gpu-test-rocm
 ```
 
@@ -111,6 +113,8 @@ Clean up when done:
 
 ```bash
 kubectl delete pod gpu-test-rocm
+docker exec -it k3d-prd-local-apps-001-server-0 ctr -n k8s.io images rm docker.io/rocm/pytorch:latest
+docker exec -it k3d-prd-local-apps-001-server-0 crictl rmi --prune
 ```
 
 > **`HSA_OVERRIDE_GFX_VERSION`:** If `rocm-smi` detects the GPU but application workloads (PyTorch, Ollama, etc.) fail with "no GPU agent" or similar errors, your GPU architecture may not have pre-built kernels in the container image. Set `HSA_OVERRIDE_GFX_VERSION` in the pod environment to the major.minor.0 of your architecture (e.g. `12.0.0` for `gfx1201`, `11.0.0` for `gfx1100`). See [INSTALL_DOCKER.md](INSTALL_DOCKER.md) Step 5 for details.

@@ -1,7 +1,7 @@
 # Install Argo CD
 [<< back](INSTALL.md)
 
-To install Argo CD into your k3d cluster alongside Rancher, the most efficient method is using its official Helm chart.
+To install Argo CD into your k3d cluster alongside Portainer or Rancher, the most efficient method is using its official Helm chart.
 
 ## [Optional] Install the ArgoCD Cli
 
@@ -168,7 +168,7 @@ kubectl create secret docker-registry acr-pull-secret \
 ### Edit the config map
 Because the install was from github we have to manually edit the config map to add the registry config.  Inside the editor, add the registries.conf block under data:.
 
-Navigate to Rancher and select `ConfigMpas & Secrets` and find the argocd-image-updater-config.  It should look something like this after adding he repository to the data section:
+Navigate to Rancher and select `ConfigMaps & Secrets` and find the `argocd-image-updater-config`.  It should look something like this after adding he repository to the data section:
 
 ``` yaml
 apiVersion: v1
