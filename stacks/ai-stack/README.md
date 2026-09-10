@@ -80,12 +80,22 @@ kubectl -n ai-platform get pods,svc,ingress,pvc
 # Install Ollama on the host
 curl -fsSL https://ollama.com/install.sh | sh
 
-# Make Ollama listen on a non-loopback interface
+# Create a dedicated folder for large models and give the ollama user ownership
+sudo mkdir -p /mnt/dev-storage/ollama/models
+sudo chown -R ollama:ollama /mnt/dev-storage/ollama/models
+
+# Ensure every parent directory is traversable (+x) by the ollama user, e.g. if
+# your home/storage folder is chmod 700, the ollama service user gets "permission
+# denied: ensure path elements are traversable" even though the leaf folder is owned by it
+sudo chmod o+x /mnt/dev-storage
+
+# Make Ollama listen on a non-loopback interface and store models outside the root volume
 sudo systemctl edit ollama.service
 
 # Add this to the override file:
 [Service]
 Environment="OLLAMA_HOST=0.0.0.0"
+Environment="OLLAMA_MODELS=/mnt/dev-storage/ollama/models"
 
 # Reload and restart
 sudo systemctl daemon-reload
@@ -93,6 +103,23 @@ sudo systemctl restart ollama.service
 
 # Verify Ollama is listening on 0.0.0.0 or *:11434
 sudo ss -antp | grep 11434
+
+# Verify new models are pulled into the configured folder
+ls /mnt/dev-storage/ollama/models
+```
+
+### Downloading a New Model (e.g. gemma4:31b)
+
+```bash
+# Pull the model on the host (stored under OLLAMA_MODELS)
+ollama pull gemma4:31b
+ollama pull qwen3-coder:30b
+
+# Confirm the model is available
+ollama list
+
+# Quick sanity test
+ollama run gemma4:31b "Say hello in one sentence."
 ```
 
 ### Network + Firewall
