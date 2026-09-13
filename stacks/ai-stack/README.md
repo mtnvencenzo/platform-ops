@@ -96,6 +96,7 @@ sudo systemctl edit ollama.service
 [Service]
 Environment="OLLAMA_HOST=0.0.0.0"
 Environment="OLLAMA_MODELS=/mnt/dev-storage/ollama/models"
+Environment="HIP_VISIBLE_DEVICES=0"
 
 # Reload and restart
 sudo systemctl daemon-reload
