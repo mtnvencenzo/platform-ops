@@ -108,3 +108,38 @@ Use kubectl (installed automatically with k3d or installed separately) to verify
 ```  shell
 k3d cluster list
 ```
+
+## Step 4: Automate Cluster Start/Stop on Boot/Shutdown
+
+Create a `systemd` unit so the cluster is started when the machine boots and cleanly stopped on shutdown/reboot. Adjust `User`, `HOME`, and the `k3d` binary path (`which k3d`) to match your system.
+
+``` shell
+sudo tee /etc/systemd/system/k3d-prd-local-apps-001.service > /dev/null <<'EOF'
+[Unit]
+Description=Start/stop k3d cluster prd-local-apps-001
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=mtnvencenzo
+Environment=HOME=/home/mtnvencenzo
+ExecStart=/usr/local/bin/k3d cluster start prd-local-apps-001
+ExecStop=/usr/local/bin/k3d cluster stop prd-local-apps-001
+TimeoutStartSec=120
+TimeoutStopSec=60
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now k3d-prd-local-apps-001.service
+```
+
+Notes:
+- `ExecStart` runs on boot (after `docker.service` is up); `ExecStop` runs automatically on `systemctl stop`, `disable`, or system shutdown/reboot since `RemainAfterExit=yes` keeps the unit "active" until then.
+- Check status/logs with `systemctl status k3d-prd-local-apps-001.service` and `journalctl -u k3d-prd-local-apps-001.service`.
+- To disable automation: `sudo systemctl disable --now k3d-prd-local-apps-001.service`.
