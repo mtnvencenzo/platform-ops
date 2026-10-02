@@ -1,0 +1,11 @@
+# Pull the base 32B model you downloaded
+FROM qwen2.5:32b
+
+# Set the context window to 32,768 tokens
+PARAMETER num_ctx 32768
+
+# Lower temperature slightly for strict code/JSON compliance in Cline
+PARAMETER temperature 0.2
+
+# Ensure Flash Attention is forced on to save VRAM at high context lengths
+PARAMETER f16_kv true
