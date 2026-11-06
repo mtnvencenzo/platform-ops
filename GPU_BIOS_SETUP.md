@@ -1,14 +1,12 @@
-# GPU Bios and Grub Settings 
+# GPU BIOS and GRUB Settings
 
 ## Hardware & Software
-- **Gigabyte Radeon AI TOP Pro 32GB GPU** 
+- **Gigabyte Radeon AI TOP Pro 32GB GPU**
 - **ASUS Pro Art 870E Creator WIFI Motherboard**
 - **Ubuntu 26.04**
 
-Based on our recent troubleshooting for your headless AI workload setup, we have focused heavily on stabilizing your Gigabyte Radeon AI TOP Pro 32GB GPU on the ASUS ProArt X870E-Creator WiFi motherboard running Ubuntu 26.04.
-
-## Settings 
-Here is the exact breakdown of the system and firmware configurations we put in place to stop the GPU from crashing, throwing bus errors, or dropping off the topology:
+## Settings
+The following firmware and operating-system settings are intended for a headless compute system using this GPU and motherboard.
 
 
 ### ASUS ProArt BIOS Firmware Settings
@@ -16,13 +14,13 @@ Here is the exact breakdown of the system and firmware configurations we put in 
 - Above 4G Decoding: Enabled (Crucial for mapping the large 32GB VRAM allocation pool).
 - Re-Size BAR Support: Enabled (Allows the CPU to negotiate full access to the GPU frame buffer simultaneously).
 - Integrated Graphics: Forced explicitly to IGFX (Ensures your monitors run cleanly off the motherboard's onboard ports, leaving the discrete 32GB card completely headless for compute).
-- PCIe ASPM Mode Control: Disabled (Turned off Native ASPM to prevent the PCIe slots from entering low-power sleep states, which was causing the driver to time out).
+- PCIe ASPM Mode Control: Disabled (Disables native PCIe ASPM to help prevent low-power link states that may cause driver timeouts).
 - IOMMU / ACS Controls: Enabled (ASUS firmware integrates Access Control Services directly into IOMMU; this isolates the PCIe groups cleanly for deep learning frameworks).
 
 
 ### Ubuntu GRUB Kernel Parameters
 
-To change how the Linux kernel initializes and interacts with the AMD hardware, we updated your /etc/default/grub configuration line to reflect the following parameters:
+To configure how the Linux kernel initializes and manages the AMD GPU, add these parameters to `GRUB_CMDLINE_LINUX_DEFAULT` in `/etc/default/grub`:
 
 ``` bash
 sudo nano /etc/default/grub
@@ -30,20 +28,19 @@ sudo nano /etc/default/grub
 # Add or edit this line
 # GRUB_CMDLINE_LINUX_DEFAULT="quiet splash amdgpu.aspm=0 amdgpu.gpu_recovery=1 amdgpu.runpm=0"
 
-sudo update-grub
-
 ```
 
-- **amdgpu.aspm=0:** Explicitly blocks the kernel graphics driver from trying to power-manage the PCIe bus link, resolving the Device lost from bus faults.
-- **amdgpu.gpu_recovery=1:** Instructs the driver to attempt a soft reset mechanism if a ring buffer stalls, preventing a hard system lockup.
-- **amdgpu.runpm=0:** Keeps the GPU powered on: It stops the Linux kernel from dynamically turning off or putting the AMD graphics card to sleep during runtime.  Normally, the Linux amdgpu driver automatically powers down discrete GPUs (dGPUs) or puts them into a low-power/suspended state when they are idle to save energy and reduce heat.
+- **`amdgpu.aspm=0`:** Disables PCIe link power management in the AMD GPU driver, which can help prevent bus-related device errors.
+- **`amdgpu.gpu_recovery=1`:** Enables the driver's GPU recovery mechanism if a ring buffer stalls.
+- **`amdgpu.runpm=0`:** Disables runtime power management for the GPU, preventing it from being powered down or suspended while idle. The default behavior may reduce power use and heat.
 
 
-#### OS & Initramfs Deployment Commands
+#### Apply GRUB and Initramfs Changes
 
-After altering the GRUB underlying parameters, to bake the updated amdgpu kernal module instructions into the initial boot RAM disk environment.
+After changing the GRUB parameters, update GRUB and regenerate the initramfs so the updated AMD GPU driver settings are available during boot.
 
 ``` bash
+sudo update-grub
 sudo update-initramfs -u
 ```
 
@@ -51,14 +48,14 @@ sudo update-initramfs -u
 
 ### Power usage
 
-How to check power usage
+Display GPU power usage:
 ``` bash
 rocm-smi --showpower
 ```
 
-### System Logs & Kernal Errors
+### System Logs & Kernel Errors
 
-Used to search the raw kernel ring buffer for initialization errors, missing hardware warnings, or crashes specifically related to the AMD driver.
+Search kernel messages for AMD GPU initialization errors, missing-device warnings, or driver crashes:
 
 ``` bash
 dmesg | grep -i amdgpu
@@ -66,7 +63,7 @@ dmesg | grep -i amdgpu
 
 ### GPU Telemetry & Status
 
-To verify if the discrete PCIe device was physically visible on the bus and confirm which kernel driver (amdgpu) was bound to it.
+Check whether the GPU is visible on the PCIe bus and which kernel driver is bound to it:
 
 ``` bash
 lspci -nnk | grep -A 3 VGA
