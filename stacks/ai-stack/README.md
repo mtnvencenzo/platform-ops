@@ -121,6 +121,9 @@ ollama list
 
 # Quick sanity test
 ollama run gemma4:31b "Say hello in one sentence."
+
+# Remove a model from ollama and disk
+ollama rm qwen3-coder:30b
 ```
 
 ### Network + Firewall
